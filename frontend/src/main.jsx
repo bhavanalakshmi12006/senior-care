@@ -13,12 +13,14 @@ class AppErrorBoundary extends React.Component {
   }
 }
 
+const DEFAULT_GOOGLE_CLIENT_ID = "364550524970-hjvfvn7bkh3lcmeh0gjkppnl1cpva5ua.apps.googleusercontent.com";
+
 function RootApp() {
   const [googleId, setGoogleId] = React.useState(() => {
     const saved = localStorage.getItem("seniorcare_google_client_id") || "";
     const env = (import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
-    const raw = saved || env;
-    if (!raw || raw.includes("your-google") || raw.includes("your-google-web")) return "";
+    const raw = saved || env || DEFAULT_GOOGLE_CLIENT_ID;
+    if (!raw || raw.includes("your-google") || raw.includes("your-google-web")) return DEFAULT_GOOGLE_CLIENT_ID;
     return raw.trim();
   });
 

@@ -30,12 +30,14 @@ export function AuthProvider({ children }) {
     return localStorage.getItem("seniorcare_text_color") || "";
   });
 
+const DEFAULT_GOOGLE_CLIENT_ID = "364550524970-hjvfvn7bkh3lcmeh0gjkppnl1cpva5ua.apps.googleusercontent.com";
+
   const [googleClientId, setGoogleClientId] = useState(() => {
     const saved = localStorage.getItem("seniorcare_google_client_id") || "";
     const env = (import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
     if (saved && !saved.includes("your-google")) return saved;
     if (env && !env.includes("your-google")) return env;
-    return "";
+    return DEFAULT_GOOGLE_CLIENT_ID;
   });
 
   const [loading, setLoading] = useState(false);
@@ -83,11 +85,24 @@ export function AuthProvider({ children }) {
 
   // Keep googleClientId in sync across tabs or custom dispatch
   useEffect(() => {
+    // Fetch dynamic config from backend
+    api.get("/config")
+      .then((res) => {
+        if (res.data?.googleClientId) {
+          const cid = res.data.googleClientId.trim();
+          if (cid && !cid.includes("your-google")) {
+            setGoogleClientId(cid);
+            localStorage.setItem("seniorcare_google_client_id", cid);
+          }
+        }
+      })
+      .catch(() => {});
+
     const handleGoogleIdUpdate = () => {
       const saved = localStorage.getItem("seniorcare_google_client_id") || "";
       const env = (import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
-      const raw = saved || env;
-      const valid = (!raw || raw.includes("your-google") || raw.includes("your-google-web")) ? "" : raw.trim();
+      const raw = saved || env || DEFAULT_GOOGLE_CLIENT_ID;
+      const valid = (!raw || raw.includes("your-google") || raw.includes("your-google-web")) ? DEFAULT_GOOGLE_CLIENT_ID : raw.trim();
       setGoogleClientId(valid);
     };
     window.addEventListener("seniorcare-google-id-updated", handleGoogleIdUpdate);
