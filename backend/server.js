@@ -4,6 +4,13 @@ import { createServer } from "node:http";
 import cors from "cors";
 import mongoose from "mongoose";
 import { Server as SocketIOServer } from "socket.io";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, "../frontend/dist");
 
 import authRoutes from "./routes/authRoutes.js";
 import seniorRoutes from "./routes/seniorRoutes.js";
@@ -58,14 +65,7 @@ mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB_NAME })
   .then(() => console.log(`✓ MongoDB Connected to ${MONGODB_DB_NAME} (Compass compatible at ${MONGODB_URI})`))
   .catch((err) => console.error("MongoDB Connection Error:", err.message));
 
-// Root & Health Checks
-app.get("/", (req, res) => res.json({ 
-  service: "SeniorCare Backend API", 
-  status: "online", 
-  database: "MongoDB Compass (senior_care)",
-  health: "/api/health",
-  frontendUrl: "http://localhost:5174"
-}));
+// API Health & Config Checks
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "senior-care-api", db: "mongodb", timestamp: new Date() }));
 app.get("/api/config", (req, res) => res.json({
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -89,6 +89,23 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/videos", videoRoutes);
+
+// Static frontend serving for production / All-in-One deployment
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ message: "API endpoint not found" });
+    }
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+} else {
+  app.get("/", (req, res) => res.json({ 
+    service: "SeniorCare Backend API", 
+    status: "online", 
+    health: "/api/health" 
+  }));
+}
 
 // Central error handler
 app.use((err, req, res, next) => {

@@ -14,7 +14,7 @@ export function SocketProvider({ children }) {
   const [liveEventSignal, setLiveEventSignal] = useState(0);
 
   useEffect(() => {
-    const newSocket = io(API_BASE_URL, {
+    const newSocket = io(API_BASE_URL || undefined, {
       transports: ["websocket", "polling"]
     });
 
