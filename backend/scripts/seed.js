@@ -39,17 +39,56 @@ async function seed() {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  // 1. Seed Users
+  // 1. Seed Users with Official Accounts and Contact Numbers
   const userSeeds = [
     { email: "admin.test@seniorcare.local", displayName: "Administrator Rajesh", firstName: "Rajesh", lastName: "Sharma", role: "admin", phone: "+91 98765 00001", address: "Anna Nagar, Chennai" },
     { email: "staff.test@seniorcare.local", displayName: "Staff Murugan", firstName: "Murugan", lastName: "Pillai", role: "staff", phone: "+91 98765 00002", address: "T. Nagar, Chennai" },
-    { email: "senior.test@seniorcare.local", displayName: "Lakshmi Devi", firstName: "Lakshmi", lastName: "Devi", role: "senior_citizen", phone: "+91 98765 43210", address: "Flat 104, Senior Haven, Adyar, Chennai" },
-    { email: "family.test@seniorcare.local", displayName: "Priya Ramesh", firstName: "Priya", lastName: "Ramesh", role: "family_member", phone: "+91 98765 00003", address: "Velachery, Chennai" },
-    { email: "family2.test@seniorcare.local", displayName: "Vignesh Ramesh", firstName: "Vignesh", lastName: "Ramesh", role: "family_member", phone: "+91 98765 00006", address: "Adyar, Chennai" },
-    { email: "caretaker.test@seniorcare.local", displayName: "Anitha Krishnan", firstName: "Anitha", lastName: "Krishnan", role: "caretaker", phone: "+91 98765 00004", address: "Mylapore, Chennai" },
-    { email: "caregiver.test@seniorcare.local", displayName: "Anitha Krishnan", firstName: "Anitha", lastName: "Krishnan", role: "caretaker", phone: "+91 98765 00004", address: "Mylapore, Chennai" },
-    { email: "volunteer.test@seniorcare.local", displayName: "Karthik Raman", firstName: "Karthik", lastName: "Raman", role: "volunteer", phone: "+91 98765 00005", address: "Thiruvanmiyur, Chennai" },
-    { email: "temp.caregiver@seniorcare.local", displayName: "Dinesh Kumar (Probation)", firstName: "Dinesh", lastName: "Kumar", role: "caretaker", phone: "+91 98765 00099", address: "Tambaram, Chennai" }
+    
+    // Senior Citizens
+    { email: "senior.test@seniorcare.local", displayName: "Kalyani Ammal", firstName: "Kalyani", lastName: "Ammal", role: "senior_citizen", phone: "+91 9080578504", address: "Door No. 14, 2nd Cross Street, Kasturibai Nagar, Adyar, Chennai" },
+    { email: "senior2.test@seniorcare.local", displayName: "Ramasamy Sundaram", firstName: "Ramasamy", lastName: "Sundaram", role: "senior_citizen", phone: "+91 98765 43211", address: "Flat 2A, Anandam Apts, 4th Main Road, Gandhi Nagar, Adyar, Chennai" },
+    { email: "senior3.test@seniorcare.local", displayName: "Meenakshi Ammal", firstName: "Meenakshi", lastName: "Ammal", role: "senior_citizen", phone: "+91 98765 43212", address: "Old No. 45, New No. 22, South Mada Street, Mylapore, Chennai" },
+    { email: "senior4.test@seniorcare.local", displayName: "Gopalakrishnan V", firstName: "Gopalakrishnan", lastName: "V", role: "senior_citizen", phone: "+91 98765 43213", address: "Plot 88, 3rd Seaward Road, Valmiki Nagar, Thiruvanmiyur, Chennai" },
+    { email: "senior5.test@seniorcare.local", displayName: "Dr. K. S. Ramanathan", firstName: "Ramanathan", lastName: "K S", role: "senior_citizen", phone: "+91 98765 43215", address: "Door No. 28, 4th Seaward Road, Valmiki Nagar, Thiruvanmiyur, Chennai" },
+    { email: "senior6.test@seniorcare.local", displayName: "Rajalakshmi Narayanan", firstName: "Rajalakshmi", lastName: "Narayanan", role: "senior_citizen", phone: "+91 98765 43216", address: "Flat 3B, Brindavan Apts, 3rd Cross Street, Mandaveli, Chennai" },
+
+    // Family Members for Senior 1 (Kalyani Ammal - 3 Children)
+    { email: "family.test@seniorcare.local", displayName: "Bhavana Lakshmi (Daughter)", firstName: "Bhavana", lastName: "Lakshmi", role: "family_member", phone: "+91 9345403336", address: "Velachery, Chennai" },
+    { email: "bhavanalakshmi12006@gmail.com", displayName: "Bhavana Lakshmi (Daughter)", firstName: "Bhavana", lastName: "Lakshmi", role: "family_member", phone: "+91 9345403336", address: "Velachery, Chennai" },
+    { email: "arun.kumar@seniorcare.local", displayName: "Arun Kumar (Son)", firstName: "Arun", lastName: "Kumar", role: "family_member", phone: "+91 98765 77771", address: "Velachery, Chennai" },
+    { email: "pooja.lakshmi@seniorcare.local", displayName: "Pooja Lakshmi (Daughter)", firstName: "Pooja", lastName: "Lakshmi", role: "family_member", phone: "+91 98765 77772", address: "Velachery, Chennai" },
+
+    // Family Members for Senior 2 (Ramasamy Sundaram - 2 Children)
+    { email: "family2.test@seniorcare.local", displayName: "Suresh Sundaram (Son)", firstName: "Suresh", lastName: "Sundaram", role: "family_member", phone: "+91 98765 11111", address: "Adyar, Chennai" },
+    { email: "suresh.sundaram@seniorcare.local", displayName: "Suresh Sundaram (Son)", firstName: "Suresh", lastName: "Sundaram", role: "family_member", phone: "+91 98765 11111", address: "Adyar, Chennai" },
+    { email: "kavitha.sundaram@seniorcare.local", displayName: "Kavitha Sundaram (Daughter)", firstName: "Kavitha", lastName: "Sundaram", role: "family_member", phone: "+91 98765 11112", address: "Adyar, Chennai" },
+
+    // Family Members for Senior 3 (Meenakshi Ammal - 2 Children)
+    { email: "family3.test@seniorcare.local", displayName: "Geetha Mohan (Daughter-in-law)", firstName: "Geetha", lastName: "Mohan", role: "family_member", phone: "+91 98765 22222", address: "Mylapore, Chennai" },
+    { email: "geetha.mohan@seniorcare.local", displayName: "Geetha Mohan (Daughter-in-law)", firstName: "Geetha", lastName: "Mohan", role: "family_member", phone: "+91 98765 22222", address: "Mylapore, Chennai" },
+    { email: "mohan.narayanan@seniorcare.local", displayName: "Mohan Narayanan (Son)", firstName: "Mohan", lastName: "Narayanan", role: "family_member", phone: "+91 98765 22223", address: "Mylapore, Chennai" },
+
+    // Family Members for Senior 4 (Gopalakrishnan V - 2 Children)
+    { email: "family4.test@seniorcare.local", displayName: "Venkat Gopal (Son-in-law)", firstName: "Venkat", lastName: "Gopal", role: "family_member", phone: "+91 98765 33333", address: "Thiruvanmiyur, Chennai" },
+    { email: "venkat.gopal@seniorcare.local", displayName: "Venkat Gopal (Son-in-law)", firstName: "Venkat", lastName: "Gopal", role: "family_member", phone: "+91 98765 33333", address: "Thiruvanmiyur, Chennai" },
+    { email: "shanthi.gopal@seniorcare.local", displayName: "Shanthi Gopal (Daughter)", firstName: "Shanthi", lastName: "Gopal", role: "family_member", phone: "+91 98765 33334", address: "Thiruvanmiyur, Chennai" },
+
+    // Family Members for Senior 5 (Dr. K. S. Ramanathan - 3 Children)
+    { email: "family5.test@seniorcare.local", displayName: "Dr. Karthik Ramanathan (Son)", firstName: "Karthik", lastName: "Ramanathan", role: "family_member", phone: "+91 98765 55551", address: "Thiruvanmiyur, Chennai" },
+    { email: "karthik.ramanathan@seniorcare.local", displayName: "Dr. Karthik Ramanathan (Son)", firstName: "Karthik", lastName: "Ramanathan", role: "family_member", phone: "+91 98765 55551", address: "Thiruvanmiyur, Chennai" },
+    { email: "priya.ramanathan@seniorcare.local", displayName: "Priya Ramanathan (Daughter)", firstName: "Priya", lastName: "Ramanathan", role: "family_member", phone: "+91 98765 55552", address: "Besant Nagar, Chennai" },
+    { email: "ashwin.ramanathan@seniorcare.local", displayName: "Ashwin Ramanathan (Son)", firstName: "Ashwin", lastName: "Ramanathan", role: "family_member", phone: "+91 98765 55553", address: "OMR, Chennai" },
+
+    // Family Members for Senior 6 (Rajalakshmi Narayanan - 3 Children)
+    { email: "family6.test@seniorcare.local", displayName: "Deepa Narayanan (Daughter)", firstName: "Deepa", lastName: "Narayanan", role: "family_member", phone: "+91 98765 66661", address: "Mandaveli, Chennai" },
+    { email: "deepa.narayanan@seniorcare.local", displayName: "Deepa Narayanan (Daughter)", firstName: "Deepa", lastName: "Narayanan", role: "family_member", phone: "+91 98765 66661", address: "Mandaveli, Chennai" },
+    { email: "vijay.narayanan@seniorcare.local", displayName: "Vijay Narayanan (Son)", firstName: "Vijay", lastName: "Narayanan", role: "family_member", phone: "+91 98765 66662", address: "Alwarpet, Chennai" },
+    { email: "swetha.narayanan@seniorcare.local", displayName: "Swetha Narayanan (Daughter)", firstName: "Swetha", lastName: "Narayanan", role: "family_member", phone: "+91 98765 66663", address: "RA Puram, Chennai" },
+
+    // Care Staff & Volunteers
+    { email: "caretaker.test@seniorcare.local", displayName: "Anitha Krishnan", firstName: "Anitha", lastName: "Krishnan", role: "caretaker", phone: "+91 6382598599", address: "Mylapore, Chennai" },
+    { email: "caregiver.test@seniorcare.local", displayName: "Anitha Krishnan", firstName: "Anitha", lastName: "Krishnan", role: "caretaker", phone: "+91 6382598599", address: "Mylapore, Chennai" },
+    { email: "volunteer.test@seniorcare.local", displayName: "Karthik Raman", firstName: "Karthik", lastName: "Raman", role: "volunteer", phone: "+91 9443327744", address: "Thiruvanmiyur, Chennai" }
   ];
 
   const createdUsers = {};
@@ -60,92 +99,168 @@ async function seed() {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     createdUsers[u.role] = user;
-    if (u.email.includes("senior")) createdUsers.seniorUser = user;
-    if (u.email.includes("caretaker")) createdUsers.caretakerUser = user;
-    if (u.email.includes("family2")) createdUsers.family2_member = user;
-    if (u.email.includes("family.") || u.email === "family.test@seniorcare.local") createdUsers.family_member = user;
+    createdUsers[u.email] = user;
+    if (u.email.includes("senior.test")) createdUsers.seniorUser = user;
+    if (u.email.includes("caretaker") || u.email.includes("caregiver")) createdUsers.caretakerUser = user;
+    if (u.email.includes("family.") || u.email.includes("bhavana")) createdUsers.family_member = user;
+    if (u.email.includes("volunteer")) createdUsers.volunteerUser = user;
   }
-  console.log("✓ Users seeded");
+  console.log("✓ Users seeded with official accounts and phone numbers");
 
-  // 2. Seed Seniors
+  // 2. Seed Seniors with Family Member Linkages
   await Senior.deleteMany({});
   const seniorDocs = await Senior.insertMany([
     {
-      userId: createdUsers.seniorUser._id,
-      name: "Lakshmi Devi",
+      userId: createdUsers["senior.test@seniorcare.local"]._id,
+      name: "Kalyani Ammal",
       age: 72,
       gender: "Female",
-      phone: "+91 98765 43210",
-      address: "Flat 104, Senior Haven, Adyar, Chennai",
-      emergencyContactName: "Priya Ramesh (Daughter)",
-      emergencyContactPhone: "+91 98765 00003",
+      phone: "+91 9080578504",
+      address: "Door No. 14, 2nd Cross Street, Kasturibai Nagar, Adyar, Chennai",
+      emergencyContactName: "Bhavana Lakshmi (Daughter)",
+      emergencyContactPhone: "+91 9345403336",
       emergencyContactRelation: "Daughter",
       bloodGroup: "O+",
-      medicalNotes: "Hypertension, Mild Type-2 Diabetes. Regular morning BP check needed.",
-      roomNumber: "Room 104",
+      medicalNotes: "Hypertension, Mild Type-2 Diabetes. Monthly routine checkup cycle scheduled.",
+      roomNumber: "Independent Home Residence",
       assignedCaregiverId: createdUsers.caretakerUser._id,
       assignedCaregiverName: "Anitha Krishnan",
-      familyMemberUserIds: [createdUsers.family_member._id, createdUsers.family2_member._id],
+      familyMemberUserIds: [
+        createdUsers["family.test@seniorcare.local"]._id,
+        createdUsers["bhavanalakshmi12006@gmail.com"]._id,
+        createdUsers["arun.kumar@seniorcare.local"]._id,
+        createdUsers["pooja.lakshmi@seniorcare.local"]._id
+      ],
       safetyStatus: "safe",
       lastCheckinAt: new Date(),
       checkinStreak: 14,
       status: "active"
     },
     {
+      userId: createdUsers["senior2.test@seniorcare.local"]._id,
       name: "Ramasamy Sundaram",
       age: 78,
       gender: "Male",
       phone: "+91 98765 43211",
-      address: "Room 108, Senior Haven, Adyar, Chennai",
+      address: "Flat 2A, Anandam Apts, 4th Main Road, Gandhi Nagar, Adyar, Chennai",
       emergencyContactName: "Suresh Sundaram (Son)",
       emergencyContactPhone: "+91 98765 11111",
       emergencyContactRelation: "Son",
       bloodGroup: "B+",
       medicalNotes: "Post knee replacement recovery, requires cane assistance.",
-      roomNumber: "Room 108",
+      roomNumber: "Independent Residence",
       assignedCaregiverId: createdUsers.caretakerUser._id,
       assignedCaregiverName: "Anitha Krishnan",
+      familyMemberUserIds: [
+        createdUsers["family2.test@seniorcare.local"]._id,
+        createdUsers["suresh.sundaram@seniorcare.local"]._id,
+        createdUsers["kavitha.sundaram@seniorcare.local"]._id
+      ],
       safetyStatus: "safe",
       lastCheckinAt: new Date(Date.now() - 3600000 * 2),
       checkinStreak: 9,
       status: "active"
     },
     {
+      userId: createdUsers["senior3.test@seniorcare.local"]._id,
       name: "Meenakshi Ammal",
       age: 81,
       gender: "Female",
       phone: "+91 98765 43212",
-      address: "Room 202, Senior Haven, Adyar, Chennai",
-      emergencyContactName: "Geetha Mohan (Niece)",
+      address: "Old No. 45, New No. 22, South Mada Street, Mylapore, Chennai",
+      emergencyContactName: "Geetha Mohan (Daughter-in-law)",
       emergencyContactPhone: "+91 98765 22222",
-      emergencyContactRelation: "Niece",
+      emergencyContactRelation: "Daughter-in-law",
       bloodGroup: "A+",
       medicalNotes: "Mild memory lapses, arthritis, cataract surgery scheduled.",
-      roomNumber: "Room 202",
+      roomNumber: "Independent Residence",
       assignedCaregiverId: createdUsers.caretakerUser._id,
       assignedCaregiverName: "Anitha Krishnan",
+      familyMemberUserIds: [
+        createdUsers["family3.test@seniorcare.local"]._id,
+        createdUsers["geetha.mohan@seniorcare.local"]._id,
+        createdUsers["mohan.narayanan@seniorcare.local"]._id
+      ],
       safetyStatus: "safe",
       lastCheckinAt: new Date(Date.now() - 3600000 * 4),
       checkinStreak: 5,
       status: "active"
     },
     {
+      userId: createdUsers["senior4.test@seniorcare.local"]._id,
       name: "Gopalakrishnan V",
       age: 75,
       gender: "Male",
       phone: "+91 98765 43213",
-      address: "Room 205, Senior Haven, Adyar, Chennai",
-      emergencyContactName: "Venkat G (Son)",
+      address: "Plot 88, 3rd Seaward Road, Valmiki Nagar, Thiruvanmiyur, Chennai",
+      emergencyContactName: "Venkat Gopal (Son-in-law)",
       emergencyContactPhone: "+91 98765 33333",
-      emergencyContactRelation: "Son",
+      emergencyContactRelation: "Son-in-law",
       bloodGroup: "AB+",
       medicalNotes: "Pacemaker implanted 2022, routine cardiac review.",
-      roomNumber: "Room 205",
+      roomNumber: "Independent Residence",
       assignedCaregiverId: createdUsers.caretakerUser._id,
       assignedCaregiverName: "Anitha Krishnan",
+      familyMemberUserIds: [
+        createdUsers["family4.test@seniorcare.local"]._id,
+        createdUsers["venkat.gopal@seniorcare.local"]._id,
+        createdUsers["shanthi.gopal@seniorcare.local"]._id
+      ],
       safetyStatus: "safe",
       lastCheckinAt: new Date(Date.now() - 3600000 * 26),
       checkinStreak: 12,
+      status: "active"
+    },
+    {
+      userId: createdUsers["senior5.test@seniorcare.local"]._id,
+      name: "Dr. K. S. Ramanathan",
+      age: 76,
+      gender: "Male",
+      phone: "+91 98765 43215",
+      address: "Door No. 28, 4th Seaward Road, Valmiki Nagar, Thiruvanmiyur, Chennai",
+      emergencyContactName: "Dr. Karthik Ramanathan (Son)",
+      emergencyContactPhone: "+91 98765 55551",
+      emergencyContactRelation: "Son",
+      bloodGroup: "A+",
+      medicalNotes: "Chronic hypertension, diabetic neuropathy, needs monthly cardiology review.",
+      roomNumber: "Villa 12, Senior Care Haven",
+      assignedCaregiverId: createdUsers.caretakerUser._id,
+      assignedCaregiverName: "Anitha Krishnan",
+      familyMemberUserIds: [
+        createdUsers["family5.test@seniorcare.local"]._id,
+        createdUsers["karthik.ramanathan@seniorcare.local"]._id,
+        createdUsers["priya.ramanathan@seniorcare.local"]._id,
+        createdUsers["ashwin.ramanathan@seniorcare.local"]._id
+      ],
+      safetyStatus: "safe",
+      lastCheckinAt: new Date(),
+      checkinStreak: 18,
+      status: "active"
+    },
+    {
+      userId: createdUsers["senior6.test@seniorcare.local"]._id,
+      name: "Rajalakshmi Narayanan",
+      age: 74,
+      gender: "Female",
+      phone: "+91 98765 43216",
+      address: "Flat 3B, Brindavan Apts, 3rd Cross Street, Mandaveli, Chennai",
+      emergencyContactName: "Deepa Narayanan (Daughter)",
+      emergencyContactPhone: "+91 98765 66661",
+      emergencyContactRelation: "Daughter",
+      bloodGroup: "B+",
+      medicalNotes: "Osteoarthritis, mild glaucoma, routine eye drops & physiotherapy.",
+      roomNumber: "Suite 104, Senior Care Haven",
+      assignedCaregiverId: createdUsers.caretakerUser._id,
+      assignedCaregiverName: "Anitha Krishnan",
+      familyMemberUserIds: [
+        createdUsers["family6.test@seniorcare.local"]._id,
+        createdUsers["deepa.narayanan@seniorcare.local"]._id,
+        createdUsers["vijay.narayanan@seniorcare.local"]._id,
+        createdUsers["swetha.narayanan@seniorcare.local"]._id
+      ],
+      safetyStatus: "safe",
+      lastCheckinAt: new Date(),
+      checkinStreak: 15,
       status: "active"
     },
     {
@@ -153,15 +268,16 @@ async function seed() {
       age: 69,
       gender: "Female",
       phone: "+91 98765 43214",
-      address: "Room 301, Senior Haven, Adyar, Chennai",
+      address: "Door No. 12, 11th Avenue, Harrington Road, Chetpet, Chennai",
       emergencyContactName: "Natarajan S (Husband)",
       emergencyContactPhone: "+91 98765 44444",
-      emergencyContactRelation: "Husband",
+      emergencyContactRelation: "Spouse",
       bloodGroup: "O-",
       medicalNotes: "Asthma, inhaler on bedside table.",
-      roomNumber: "Room 301",
+      roomNumber: "Independent Residence",
       assignedCaregiverId: createdUsers.caretakerUser._id,
       assignedCaregiverName: "Anitha Krishnan",
+      familyMemberUserIds: [],
       safetyStatus: "safe",
       lastCheckinAt: new Date(Date.now() - 3600000 * 1),
       checkinStreak: 21,
@@ -176,7 +292,7 @@ async function seed() {
   await Caregiver.create({
     userId: createdUsers.caretakerUser._id,
     name: "Anitha Krishnan",
-    phone: "+91 98765 00004",
+    phone: "+91 6382598599",
     email: "caretaker.test@seniorcare.local",
     specialization: "Geriatric Nursing & Medication Supervision",
     assignedSeniorIds: seniorDocs.map(s => s._id),
@@ -186,28 +302,263 @@ async function seed() {
   });
 
   await FamilyMember.deleteMany({});
-  await FamilyMember.create({
-    userId: createdUsers.family_member._id,
-    name: "Priya Ramesh",
-    phone: "+91 98765 00003",
-    email: "family.test@seniorcare.local",
-    relation: "Daughter",
-    linkedSeniorIds: [primarySenior._id],
-    emergencyContact: true
-  });
+  await FamilyMember.insertMany([
+    // Children for Kalyani Ammal
+    {
+      userId: createdUsers["bhavanalakshmi12006@gmail.com"]._id,
+      name: "Bhavana Lakshmi (Daughter)",
+      phone: "+91 9345403336",
+      email: "bhavanalakshmi12006@gmail.com",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[0]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["family.test@seniorcare.local"]._id,
+      name: "Bhavana Lakshmi (Daughter)",
+      phone: "+91 9345403336",
+      email: "family.test@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[0]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["arun.kumar@seniorcare.local"]._id,
+      name: "Arun Kumar (Son)",
+      phone: "+91 98765 77771",
+      email: "arun.kumar@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[0]._id],
+      emergencyContact: false
+    },
+    {
+      userId: createdUsers["pooja.lakshmi@seniorcare.local"]._id,
+      name: "Pooja Lakshmi (Daughter)",
+      phone: "+91 98765 77772",
+      email: "pooja.lakshmi@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[0]._id],
+      emergencyContact: false
+    },
+
+    // Children for Ramasamy Sundaram
+    {
+      userId: createdUsers["family2.test@seniorcare.local"]._id,
+      name: "Suresh Sundaram (Son)",
+      phone: "+91 98765 11111",
+      email: "family2.test@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[1]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["kavitha.sundaram@seniorcare.local"]._id,
+      name: "Kavitha Sundaram (Daughter)",
+      phone: "+91 98765 11112",
+      email: "kavitha.sundaram@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[1]._id],
+      emergencyContact: false
+    },
+
+    // Children for Meenakshi Ammal
+    {
+      userId: createdUsers["family3.test@seniorcare.local"]._id,
+      name: "Geetha Mohan (Daughter-in-law)",
+      phone: "+91 98765 22222",
+      email: "family3.test@seniorcare.local",
+      relation: "Daughter-in-law",
+      linkedSeniorIds: [seniorDocs[2]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["mohan.narayanan@seniorcare.local"]._id,
+      name: "Mohan Narayanan (Son)",
+      phone: "+91 98765 22223",
+      email: "mohan.narayanan@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[2]._id],
+      emergencyContact: false
+    },
+
+    // Children for Gopalakrishnan V
+    {
+      userId: createdUsers["family4.test@seniorcare.local"]._id,
+      name: "Venkat Gopal (Son-in-law)",
+      phone: "+91 98765 33333",
+      email: "family4.test@seniorcare.local",
+      relation: "Son-in-law",
+      linkedSeniorIds: [seniorDocs[3]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["shanthi.gopal@seniorcare.local"]._id,
+      name: "Shanthi Gopal (Daughter)",
+      phone: "+91 98765 33334",
+      email: "shanthi.gopal@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[3]._id],
+      emergencyContact: false
+    },
+
+    // Children for Dr. K. S. Ramanathan (Senior 5)
+    {
+      userId: createdUsers["family5.test@seniorcare.local"]._id,
+      name: "Dr. Karthik Ramanathan (Son)",
+      phone: "+91 98765 55551",
+      email: "family5.test@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[4]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["karthik.ramanathan@seniorcare.local"]._id,
+      name: "Dr. Karthik Ramanathan (Son)",
+      phone: "+91 98765 55551",
+      email: "karthik.ramanathan@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[4]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["priya.ramanathan@seniorcare.local"]._id,
+      name: "Priya Ramanathan (Daughter)",
+      phone: "+91 98765 55552",
+      email: "priya.ramanathan@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[4]._id],
+      emergencyContact: false
+    },
+    {
+      userId: createdUsers["ashwin.ramanathan@seniorcare.local"]._id,
+      name: "Ashwin Ramanathan (Son)",
+      phone: "+91 98765 55553",
+      email: "ashwin.ramanathan@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[4]._id],
+      emergencyContact: false
+    },
+
+    // Children for Rajalakshmi Narayanan (Senior 6)
+    {
+      userId: createdUsers["family6.test@seniorcare.local"]._id,
+      name: "Deepa Narayanan (Daughter)",
+      phone: "+91 98765 66661",
+      email: "family6.test@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[5]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["deepa.narayanan@seniorcare.local"]._id,
+      name: "Deepa Narayanan (Daughter)",
+      phone: "+91 98765 66661",
+      email: "deepa.narayanan@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[5]._id],
+      emergencyContact: true
+    },
+    {
+      userId: createdUsers["vijay.narayanan@seniorcare.local"]._id,
+      name: "Vijay Narayanan (Son)",
+      phone: "+91 98765 66662",
+      email: "vijay.narayanan@seniorcare.local",
+      relation: "Son",
+      linkedSeniorIds: [seniorDocs[5]._id],
+      emergencyContact: false
+    },
+    {
+      userId: createdUsers["swetha.narayanan@seniorcare.local"]._id,
+      name: "Swetha Narayanan (Daughter)",
+      phone: "+91 98765 66663",
+      email: "swetha.narayanan@seniorcare.local",
+      relation: "Daughter",
+      linkedSeniorIds: [seniorDocs[5]._id],
+      emergencyContact: false
+    }
+  ]);
 
   await Volunteer.deleteMany({});
   await Volunteer.create({
-    userId: createdUsers.volunteer._id,
+    userId: createdUsers.volunteerUser?._id || createdUsers.volunteer?._id,
     name: "Karthik Raman",
-    phone: "+91 98765 00005",
+    phone: "+91 9443327744",
     email: "volunteer.test@seniorcare.local",
     skills: ["Medicine Pickup", "Grocery Shopping", "Tech Assistance", "Wheelchair Support"],
     availability: "Weekdays 8am - 6pm",
-    tasksCompleted: 42,
+    tasksCompleted: 18,
     status: "active"
   });
-  console.log("✓ Caregiver, Family & Volunteer profiles seeded");
+
+  // Seed Reviews for Leaderboard & Login Page Showcase
+  await Review.deleteMany({});
+  await Review.insertMany([
+    {
+      targetType: "caregiver",
+      targetId: createdUsers.caretakerUser._id,
+      targetName: "Anitha Krishnan",
+      targetRole: "caretaker",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      reviewerId: createdUsers.family_member._id,
+      reviewerName: "Bhavana Lakshmi (Daughter)",
+      reviewerRole: "family_member",
+      rating: 5,
+      feedback: "Nurse Anitha has been exceptionally caring and attentive to my mother Kalyani Ammal in Adyar. Her daily morning vitals tracking, BP monitoring, and warm companionship give our family total reassurance and peace of mind.",
+      tags: ["Punctual & Reliable", "Gentle & Compassionate", "Attentive to Vitals", "Highly Recommended"],
+      isComplaint: false,
+      status: "active"
+    },
+    {
+      targetType: "volunteer",
+      targetId: createdUsers.volunteerUser?._id || createdUsers.volunteer?._id,
+      targetName: "Karthik Raman",
+      targetRole: "volunteer",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      reviewerId: createdUsers.seniorUser._id,
+      reviewerName: "Kalyani Ammal",
+      reviewerRole: "senior_citizen",
+      rating: 5,
+      feedback: "Karthik helped me promptly with picking up my cardiac medications from Apollo Pharmacy and doorstep grocery assistance in Adyar. Very polite, trustworthy, and respectful young man.",
+      tags: ["Trustworthy & Safe", "Punctual & Reliable", "Excellent Communication"],
+      isComplaint: false,
+      status: "active"
+    },
+    {
+      targetType: "caregiver",
+      targetId: createdUsers.caretakerUser._id,
+      targetName: "Anitha Krishnan",
+      targetRole: "caretaker",
+      seniorId: seniorDocs[1]._id,
+      seniorName: seniorDocs[1].name,
+      reviewerId: createdUsers.adminUser?._id || createdUsers.admin?._id,
+      reviewerName: "Suresh Sundaram (Family)",
+      reviewerRole: "family_member",
+      rating: 5,
+      feedback: "Very dedicated nurse. Managed post-surgery recovery with regular physiotherapy exercises and compassionate care.",
+      tags: ["Gentle & Compassionate", "Highly Recommended"],
+      isComplaint: false,
+      status: "active"
+    },
+    {
+      targetType: "volunteer",
+      targetId: createdUsers.volunteerUser?._id || createdUsers.volunteer?._id,
+      targetName: "Karthik Raman",
+      targetRole: "volunteer",
+      seniorId: seniorDocs[4]._id,
+      seniorName: seniorDocs[4].name,
+      reviewerId: createdUsers.staffUser?._id || createdUsers.staff?._id,
+      reviewerName: "Saraswathi Natarajan",
+      reviewerRole: "senior_citizen",
+      rating: 5,
+      feedback: "Assisted me with wheelchair mobility during hospital visit and library books return. Excellent service!",
+      tags: ["Trustworthy & Safe", "Highly Recommended"],
+      isComplaint: false,
+      status: "active"
+    }
+  ]);
+  console.log("✓ Caregiver, Family & Volunteer profiles and reviews seeded");
 
   // 4. Seed Checkins
   await Checkin.deleteMany({});
@@ -217,7 +568,9 @@ async function seed() {
     { seniorId: primarySenior._id, seniorName: primarySenior.name, userId: createdUsers.seniorUser._id, status: "safe", mood: "okay", notes: "Slight joint ache, applied ointment.", method: "self", timestamp: new Date(Date.now() - 86400000 * 2) },
     { seniorId: seniorDocs[1]._id, seniorName: seniorDocs[1].name, status: "safe", mood: "good", notes: "Physiotherapy exercises done.", method: "caregiver", timestamp: new Date() },
     { seniorId: seniorDocs[2]._id, seniorName: seniorDocs[2].name, status: "safe", mood: "good", notes: "All good, had breakfast.", method: "caregiver", timestamp: new Date() },
-    { seniorId: seniorDocs[3]._id, seniorName: seniorDocs[3].name, status: "safe", mood: "okay", notes: "Resting comfortably.", method: "self", timestamp: new Date(Date.now() - 86400000) }
+    { seniorId: seniorDocs[3]._id, seniorName: seniorDocs[3].name, status: "safe", mood: "okay", notes: "Resting comfortably.", method: "self", timestamp: new Date(Date.now() - 86400000) },
+    { seniorId: seniorDocs[4]._id, seniorName: seniorDocs[4].name, userId: createdUsers["senior5.test@seniorcare.local"]._id, status: "safe", mood: "good", notes: "Morning vitals stable, blood pressure 125/82 mmHg.", method: "self", timestamp: new Date() },
+    { seniorId: seniorDocs[5]._id, seniorName: seniorDocs[5].name, userId: createdUsers["senior6.test@seniorcare.local"]._id, status: "safe", mood: "good", notes: "Eye drops taken and morning prayers done.", method: "self", timestamp: new Date() }
   ];
   await Checkin.insertMany(checkins);
   console.log("✓ Check-ins seeded");
@@ -233,13 +586,13 @@ async function seed() {
       triggeredRole: "senior_citizen",
       status: "active",
       severity: "critical",
-      location: "Room 104 - Bedside",
-      notes: "Severe shortness of breath reported. Caregiver dispatched.",
+      location: "Home Residence - Bedside (Adyar)",
+      notes: "Severe shortness of breath reported. Caregiver dispatched to home.",
       acknowledgedBy: "Anitha Krishnan (Caregiver)",
       acknowledgedAt: new Date(Date.now() - 600000),
       actionsTaken: [
-        { note: "Emergency triggered via mobile dashboard", actionTime: new Date(Date.now() - 900000), by: "Lakshmi Devi" },
-        { note: "Caregiver Anitha acknowledged alert and reached room", actionTime: new Date(Date.now() - 600000), by: "Anitha Krishnan" }
+        { note: "Emergency triggered via mobile dashboard from home residence", actionTime: new Date(Date.now() - 900000), by: "Kalyani Ammal" },
+        { note: "Caregiver Anitha acknowledged alert and reached elder's residence", actionTime: new Date(Date.now() - 600000), by: "Anitha Krishnan" }
       ]
     },
     {
@@ -268,14 +621,55 @@ async function seed() {
       appointmentCode: "APT-201",
       seniorId: primarySenior._id,
       seniorName: primarySenior.name,
-      doctorName: "Dr. S. Kumar, MD (Cardiology)",
-      department: "Cardiology",
+      doctorName: "Dr. S. Kumar, MD (Geriatric Cardiology)",
+      department: "Geriatric Medicine",
       hospital: "Apollo Senior Health Center",
-      appointmentDate: new Date(Date.now() + 86400000 * 1),
-      timeSlot: "10:30 AM",
+      appointmentDate: new Date(Date.now() + 86400000 * 1), // Tomorrow
+      timeSlot: "10:00 AM",
       status: "Upcoming",
-      notes: "Quarterly ECG and hypertension review.",
+      notes: "Monthly Routine Geriatric Checkup Cycle - October 2026. Follow-up review on adjusted Amlodipine 10mg and BP check.",
       reminderSent: true
+    },
+    {
+      appointmentCode: "APT-195",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      doctorName: "Dr. S. Kumar, MD (Geriatric Cardiology)",
+      department: "Geriatric Medicine",
+      hospital: "Apollo Senior Health Center",
+      appointmentDate: new Date(Date.now() - 86400000 * 2),
+      timeSlot: "09:30 AM",
+      status: "Completed",
+      notes: "Quarterly geriatric health examination & review.",
+      doctorFeedback: "Consultation completed. Patient reported mild evening headaches. Blood pressure recorded at 145/90 mmHg, Pulse 76 bpm. Dr. S. Kumar increased Amlodipine dosage from 5mg to 10mg once daily in morning. Maintained Metformin at 500mg twice daily with meals. Added Atorvastatin 10mg at bedtime for lipid control. Advised low salt diet, daily 20-min walking, and repeat BP check in next monthly cycle.",
+      vitalSigns: { bp: "145/90", pulse: 76, bloodSugar: "138 mg/dL", spo2: 98 },
+      medicationChanges: [
+        {
+          medicineName: "Amlodipine",
+          dosage: "10mg",
+          previousDosage: "5mg",
+          changeType: "increased",
+          timing: "Morning after breakfast",
+          instructions: "Dosage increased from 5mg to 10mg for blood pressure regulation."
+        },
+        {
+          medicineName: "Metformin",
+          dosage: "500mg",
+          previousDosage: "500mg",
+          changeType: "continued",
+          timing: "Morning & Night after meals",
+          instructions: "Maintained unchanged. Monitor fasting glucose."
+        },
+        {
+          medicineName: "Atorvastatin",
+          dosage: "10mg",
+          previousDosage: "None",
+          changeType: "new",
+          timing: "Bedtime (Night)",
+          instructions: "New prescription started for cardiovascular protection."
+        }
+      ],
+      completedAt: new Date(Date.now() - 86400000 * 2)
     },
     {
       appointmentCode: "APT-202",
@@ -302,20 +696,32 @@ async function seed() {
       notes: "Knee arthritis assessment."
     },
     {
-      appointmentCode: "APT-195",
-      seniorId: primarySenior._id,
-      seniorName: primarySenior.name,
-      doctorName: "Dr. K. Narayanan (General Physician)",
-      department: "General Medicine",
+      appointmentCode: "APT-204",
+      seniorId: seniorDocs[4]._id,
+      seniorName: seniorDocs[4].name,
+      doctorName: "Dr. S. Kumar, MD (Geriatric Cardiology)",
+      department: "Cardiology",
       hospital: "Apollo Senior Health Center",
-      appointmentDate: new Date(Date.now() - 86400000 * 7),
-      timeSlot: "09:30 AM",
-      status: "Completed",
-      notes: "Routine quarterly physical examination - all vitals stable."
+      appointmentDate: new Date(Date.now() + 86400000 * 2),
+      timeSlot: "10:30 AM",
+      status: "Upcoming",
+      notes: "Quarterly cardiac pacemaker & hypertension checkup."
+    },
+    {
+      appointmentCode: "APT-205",
+      seniorId: seniorDocs[5]._id,
+      seniorName: seniorDocs[5].name,
+      doctorName: "Dr. R. Malathi, MS (Ophthalmology)",
+      department: "Ophthalmology",
+      hospital: "Sankara Nethralaya",
+      appointmentDate: new Date(Date.now() + 86400000 * 4),
+      timeSlot: "03:30 PM",
+      status: "Upcoming",
+      notes: "Glaucoma intraocular pressure follow-up examination."
     }
   ];
   await Appointment.insertMany(appointments);
-  console.log("✓ Appointments seeded");
+  console.log("✓ Appointments seeded with doctor feedback and medication changes");
 
   // 7. Seed Assistance Requests
   await AssistanceRequest.deleteMany({});
@@ -329,10 +735,10 @@ async function seed() {
       priority: "High",
       status: "In Progress",
       requestedBy: createdUsers.seniorUser._id,
-      assignedTo: createdUsers.volunteer._id,
+      assignedTo: createdUsers.volunteerUser._id,
       assignedToName: "Karthik Raman (Volunteer)",
       assignedRole: "volunteer",
-      notes: "Volunteer picked up prescription, expected delivery 4:00 PM."
+      notes: "Volunteer picked up prescription from pharmacy, delivered to senior residence."
     },
     {
       seniorId: primarySenior._id,
@@ -347,7 +753,7 @@ async function seed() {
       assignedToName: "Anitha Krishnan (Caregiver)",
       assignedRole: "caretaker",
       completedAt: new Date(Date.now() - 3600000 * 3),
-      notes: "Lunch delivered to Room 104."
+      notes: "Nutritious home-cooked lunch delivered to senior's home residence in Adyar by volunteer."
     },
     {
       seniorId: seniorDocs[1]._id,
@@ -357,7 +763,7 @@ async function seed() {
       description: "Needs escort for appointment on Thursday afternoon.",
       priority: "Normal",
       status: "Accepted",
-      assignedTo: createdUsers.volunteer._id,
+      assignedTo: createdUsers.volunteerUser._id,
       assignedToName: "Karthik Raman",
       assignedRole: "volunteer"
     },
@@ -370,6 +776,34 @@ async function seed() {
       priority: "High",
       status: "Requested",
       requestedBy: createdUsers.staff._id
+    },
+    {
+      seniorId: seniorDocs[4]._id,
+      seniorName: seniorDocs[4].name,
+      category: "Medicine Pickup",
+      title: "Monthly Cardiac Medications Refill & Glucometer Strips",
+      description: "Pick up monthly Telmisartan 40mg and Accu-Chek test strips from Apollo Pharmacy Thiruvanmiyur.",
+      priority: "High",
+      status: "In Progress",
+      requestedBy: createdUsers["senior5.test@seniorcare.local"]._id,
+      assignedTo: createdUsers.volunteerUser._id,
+      assignedToName: "Karthik Raman (Volunteer)",
+      assignedRole: "volunteer",
+      notes: "Volunteer dispatched and medicines handed over to Dr. K. S. Ramanathan."
+    },
+    {
+      seniorId: seniorDocs[5]._id,
+      seniorName: seniorDocs[5].name,
+      category: "Food Assistance",
+      title: "Low-Salt Herbal Soup & Diabetic Dinner Delivery",
+      description: "Organic hot nutritional dinner pack delivery to flat in Mandaveli.",
+      priority: "Normal",
+      status: "In Progress",
+      requestedBy: createdUsers["senior6.test@seniorcare.local"]._id,
+      assignedTo: createdUsers.caretakerUser._id,
+      assignedToName: "Anitha Krishnan (Caregiver)",
+      assignedRole: "caretaker",
+      notes: "Caregiver Anitha prepared soup and delivered to Rajalakshmi Narayanan."
     }
   ];
   await AssistanceRequest.insertMany(assistanceRequests);
@@ -382,20 +816,72 @@ async function seed() {
       feeCode: "FEE-301",
       seniorId: primarySenior._id,
       seniorName: primarySenior.name,
-      title: "October 2026 Monthly Care & Assisted Living",
+      title: "October 2026 Monthly Care & Assisted Living Package",
       category: "Monthly Care",
       totalAmount: 12000,
-      paidAmount: 8000,
-      remainingAmount: 4000,
+      paidAmount: 12000,
+      remainingAmount: 0,
       dueDate: new Date(Date.now() + 86400000 * 10),
-      status: "Partially Paid",
-      notes: "Includes daily nurse visits, food management, and 24/7 emergency response."
+      status: "Paid",
+      notes: "24/7 Assisted Living, Daily Nurse Vital Monitoring & Routine Care."
+    },
+    {
+      feeCode: "FEE-304",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      title: "Dr. S. Kumar Geriatric Consultation & 12-Lead ECG",
+      category: "Doctor Consultation",
+      totalAmount: 1500,
+      paidAmount: 1500,
+      remainingAmount: 0,
+      dueDate: new Date(Date.now() - 86400000 * 2),
+      status: "Paid",
+      notes: "Comprehensive Geriatric Review & 12-Lead ECG Screening."
+    },
+    {
+      feeCode: "FEE-305",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      title: "Apollo Pharmacy Monthly Tablets Refill (BP & Sugar)",
+      category: "Pharmacy & Medicine",
+      totalAmount: 2450,
+      paidAmount: 2450,
+      remainingAmount: 0,
+      dueDate: new Date(Date.now() - 86400000 * 3),
+      status: "Paid",
+      notes: "Amlodipine 10mg (increased dosage), Metformin 500mg, Atorvastatin 10mg (30-day supply)."
+    },
+    {
+      feeCode: "FEE-306",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      title: "Diagnostics: Complete Blood Count & Fasting Lipid Profile",
+      category: "Lab Diagnostics",
+      totalAmount: 1800,
+      paidAmount: 1800,
+      remainingAmount: 0,
+      dueDate: new Date(Date.now() - 86400000 * 4),
+      status: "Paid",
+      notes: "Home blood sample collection by certified phlebotomist."
+    },
+    {
+      feeCode: "FEE-307",
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      title: "Physiotherapy & Mobility Rehabilitation (5 Sessions)",
+      category: "Physiotherapy",
+      totalAmount: 3000,
+      paidAmount: 3000,
+      remainingAmount: 0,
+      dueDate: new Date(Date.now() - 86400000 * 5),
+      status: "Paid",
+      notes: "Geriatric knee strengthening & balance training with Senior Therapist."
     },
     {
       feeCode: "FEE-302",
       seniorId: seniorDocs[1]._id,
       seniorName: seniorDocs[1].name,
-      title: "Physiotherapy Package (10 Sessions)",
+      title: "Post-op Knee Rehabilitation (10 Sessions)",
       category: "Physiotherapy",
       totalAmount: 5000,
       paidAmount: 5000,
@@ -403,79 +889,79 @@ async function seed() {
       dueDate: new Date(Date.now() - 86400000 * 2),
       status: "Paid",
       notes: "Post knee surgery rehabilitation sessions."
-    },
-    {
-      feeCode: "FEE-303",
-      seniorId: seniorDocs[2]._id,
-      seniorName: seniorDocs[2].name,
-      title: "Specialist Geriatric Consultation & Labs",
-      category: "Medical Consultation",
-      totalAmount: 3500,
-      paidAmount: 0,
-      remainingAmount: 3500,
-      dueDate: new Date(Date.now() - 86400000 * 4),
-      status: "Overdue",
-      notes: "Blood panel and cardiologist review."
-    },
-    {
-      feeCode: "FEE-304",
-      seniorId: primarySenior._id,
-      seniorName: primarySenior.name,
-      title: "Dietary Nutrition Plan (Quarterly)",
-      category: "Meals",
-      totalAmount: 4500,
-      paidAmount: 4500,
-      remainingAmount: 0,
-      dueDate: new Date(Date.now() - 86400000 * 20),
-      status: "Paid",
-      notes: "Custom diabetic meals for 3 months."
     }
   ]);
-  console.log("✓ Fees seeded");
+  console.log("✓ Fees seeded with itemized medical categories");
 
   await Payment.deleteMany({});
   await Payment.insertMany([
     {
-      paymentCode: "PAY-901",
+      paymentCode: "RCP-1041",
       feeId: feeDocs[0]._id,
       seniorId: primarySenior._id,
       seniorName: primarySenior.name,
-      amount: 8000,
+      amount: 12000,
       paymentMethod: "UPI",
       transactionRef: "UPI/20261001/99281726",
+      paidAt: new Date(Date.now() - 86400000 * 5),
+      recordedBy: createdUsers.staff._id,
+      recordedByName: "SeniorCare Accounts Desk",
+      notes: "Monthly Assisted Living Package paid via UPI (GPay - Ashmitha)."
+    },
+    {
+      paymentCode: "RCP-1042",
+      feeId: feeDocs[1]._id,
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      amount: 1500,
+      paymentMethod: "UPI",
+      transactionRef: "UPI/20261004/77481923",
+      paidAt: new Date(Date.now() - 86400000 * 2),
+      recordedBy: createdUsers.staff._id,
+      recordedByName: "SeniorCare Accounts Desk",
+      notes: "Doctor consultation fee settled."
+    },
+    {
+      paymentCode: "RCP-1043",
+      feeId: feeDocs[2]._id,
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      amount: 2450,
+      paymentMethod: "UPI",
+      transactionRef: "UPI/20261003/66381029",
       paidAt: new Date(Date.now() - 86400000 * 3),
       recordedBy: createdUsers.staff._id,
-      recordedByName: "Staff Murugan",
-      notes: "Part payment received from Priya Ramesh via GPay."
+      recordedByName: "Apollo Pharmacy Desk",
+      notes: "Prescription refill (Amlodipine 10mg, Metformin, Atorvastatin) paid."
     },
     {
-      paymentCode: "PAY-902",
-      feeId: feeDocs[1]._id,
-      seniorId: seniorDocs[1]._id,
-      seniorName: seniorDocs[1].name,
-      amount: 5000,
-      paymentMethod: "Credit/Debit Card",
-      transactionRef: "TXN-8827361",
-      paidAt: new Date(Date.now() - 86400000 * 5),
-      recordedBy: createdUsers.admin._id,
-      recordedByName: "Admin Rajesh",
-      notes: "Full payment settled."
-    },
-    {
-      paymentCode: "PAY-903",
+      paymentCode: "RCP-1044",
       feeId: feeDocs[3]._id,
       seniorId: primarySenior._id,
       seniorName: primarySenior.name,
-      amount: 4500,
-      paymentMethod: "Net Banking",
-      transactionRef: "NEFT-HDFC-9921",
-      paidAt: new Date(Date.now() - 86400000 * 21),
+      amount: 1800,
+      paymentMethod: "UPI",
+      transactionRef: "UPI/20261002/55192837",
+      paidAt: new Date(Date.now() - 86400000 * 4),
       recordedBy: createdUsers.staff._id,
-      recordedByName: "Staff Murugan",
-      notes: "Quarterly meal plan paid in full."
+      recordedByName: "SeniorCare Diagnostics",
+      notes: "Lab tests (CBC, Lipid profile) settled."
+    },
+    {
+      paymentCode: "RCP-1045",
+      feeId: feeDocs[4]._id,
+      seniorId: primarySenior._id,
+      seniorName: primarySenior.name,
+      amount: 3000,
+      paymentMethod: "UPI",
+      transactionRef: "UPI/20261001/44192830",
+      paidAt: new Date(Date.now() - 86400000 * 5),
+      recordedBy: createdUsers.staff._id,
+      recordedByName: "SeniorCare Rehab Clinic",
+      notes: "Physiotherapy rehab 5 sessions package settled."
     }
   ]);
-  console.log("✓ Payments seeded");
+  console.log("✓ Payments & Official Receipts seeded");
 
   // 9. Seed Notifications
   await Notification.deleteMany({});
@@ -525,7 +1011,7 @@ async function seed() {
       recipientRole: "caretaker",
       type: "emergency",
       title: "🚨 Emergency Alert: Lakshmi Devi",
-      message: "Immediate attention requested in Room 104. Shortness of breath.",
+      message: "Immediate attention requested at Adyar home residence. Shortness of breath.",
       priority: "critical",
       link: "/emergencies",
       createdAt: new Date(Date.now() - 900000)
@@ -570,7 +1056,7 @@ async function seed() {
       itemType: "senior",
       itemId: primarySenior._id.toString(),
       title: primarySenior.name,
-      subtitle: "Senior Profile · Room 104",
+      subtitle: "Independent Home Residence · Adyar, Chennai",
       accessedAt: new Date(Date.now() - 120000)
     },
     {
@@ -594,7 +1080,7 @@ async function seed() {
   // 12. Seed Audit Log
   await AuditLog.deleteMany({});
   await AuditLog.insertMany([
-    { action: "EMERGENCY_TRIGGERED", performedBy: createdUsers.seniorUser._id, performedByName: "Lakshmi Devi", performedByRole: "senior_citizen", targetEntity: "Emergency", targetId: "EMG-1024", details: "Emergency alert triggered from room 104", timestamp: new Date(Date.now() - 900000) },
+    { action: "EMERGENCY_TRIGGERED", performedBy: createdUsers.seniorUser._id, performedByName: "Kalyani Ammal", performedByRole: "senior_citizen", targetEntity: "Emergency", targetId: "EMG-1024", details: "Emergency alert triggered from Adyar home residence", timestamp: new Date(Date.now() - 900000) },
     { action: "EMERGENCY_ACKNOWLEDGED", performedBy: createdUsers.caretakerUser._id, performedByName: "Anitha Krishnan", performedByRole: "caretaker", targetEntity: "Emergency", targetId: "EMG-1024", details: "Caregiver acknowledged and attended", timestamp: new Date(Date.now() - 600000) },
     { action: "CHECKIN_RECORDED", performedBy: createdUsers.seniorUser._id, performedByName: "Lakshmi Devi", performedByRole: "senior_citizen", targetEntity: "Checkin", targetId: "CHECK-01", details: "Daily wellness check-in completed", timestamp: new Date(Date.now() - 3600000 * 2) },
     { action: "PAYMENT_RECORDED", performedBy: createdUsers.staff._id, performedByName: "Staff Murugan", performedByRole: "staff", targetEntity: "Payment", targetId: "PAY-901", details: "Recorded ₹8,000 via UPI for FEE-301", timestamp: new Date(Date.now() - 86400000 * 3) }
@@ -764,9 +1250,13 @@ async function seed() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(seniorsSheetData), "Seniors");
 
   // Family Members sheet
+  const familyMembers = await FamilyMember.find().lean();
   const familySheetData = [
     ["Name", "Phone", "Email", "Relation", "Linked Senior"],
-    ["Priya Ramesh", "+91 98765 00003", "family.test@seniorcare.local", "Daughter", "Lakshmi Devi"]
+    ...familyMembers.map(f => {
+      const matchedSenior = seniorDocs.find(s => f.linkedSeniorIds && f.linkedSeniorIds.some(sid => sid.toString() === s._id.toString()));
+      return [f.name, f.phone, f.email, f.relation, matchedSenior ? matchedSenior.name : "Unlinked"];
+    })
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(familySheetData), "Family Members");
 

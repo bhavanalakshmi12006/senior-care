@@ -207,7 +207,7 @@ export default function Navbar({ onToggleMobileMenu, onNavigate }) {
                         onClick={() => selectSearchResult("senior", s)}
                       >
                         <strong>{s.name}</strong>
-                        <small>{s.roomNumber || s.phone || "Resident"}</small>
+                        <small>{s.address ? s.address.split(",").slice(-2)[0]?.trim() || "Home" : "Home Care"} · {s.phone || ""}</small>
                       </div>
                     ))}
                   </div>

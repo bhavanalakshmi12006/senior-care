@@ -35,7 +35,7 @@ export default function EmergencyBanner({ emergency, onNavigate, onResolved }) {
             <span className="live-dot" /> {t.emergencyActiveBanner}
           </div>
           <h4>
-            {emergency.emergencyCode} — {emergency.seniorName} ({emergency.location || "Room"})
+            {emergency.emergencyCode} — {emergency.seniorName} ({emergency.location || "Home Residence"})
           </h4>
           <p>{emergency.notes}</p>
           <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.35rem", flexWrap: "wrap", fontSize: "0.74rem" }}>

@@ -121,12 +121,12 @@ export default function AddSeniorModal({ isOpen, onClose, onSeniorAdded, initial
             </div>
 
             <div className="form-group">
-              <label>{lang === "ta" ? "அறை / ஃப்ளாட் எண்" : "Room / Flat No."}</label>
+              <label>{lang === "ta" ? "குடியிருப்பு இல்ல முகவரி / பகுதி" : "Residential Home Address / Area"}</label>
               <input
                 type="text"
                 value={formData.roomNumber}
                 onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
-                placeholder="e.g. Room 104"
+                placeholder="e.g. No. 14, Kasturibai Nagar, Adyar, Chennai"
               />
             </div>
           </div>
@@ -163,15 +163,34 @@ export default function AddSeniorModal({ isOpen, onClose, onSeniorAdded, initial
             />
           </div>
 
-          <div className="form-row-2">
+          <div className="form-row-3">
             <div className="form-group">
-              <label>{lang === "ta" ? "அவசர தொடர்பு நபர் பெயர்" : "Emergency Contact Name"}</label>
+              <label>{lang === "ta" ? "அவசர தொடர்பு / குடும்ப உறுப்பினர் பெயர்" : "Emergency Contact / Family Member"}</label>
               <input
                 type="text"
                 value={formData.emergencyContactName}
                 onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
-                placeholder="e.g. Priya Ramesh (Daughter)"
+                placeholder="e.g. Bhavana Lakshmi"
               />
+            </div>
+
+            <div className="form-group">
+              <label>{lang === "ta" ? "குடும்ப உறவு முறை (Kinship / Relation) *" : "Kinship / Relation *"}</label>
+              <select
+                value={formData.emergencyContactRelation || "Daughter"}
+                onChange={(e) => setFormData({ ...formData, emergencyContactRelation: e.target.value })}
+                style={{ fontWeight: "600", borderColor: "#0284c7" }}
+              >
+                <option value="Daughter">{lang === "ta" ? "மகள் (Daughter)" : "Daughter"}</option>
+                <option value="Son">{lang === "ta" ? "மகன் (Son)" : "Son"}</option>
+                <option value="Son-in-law">{lang === "ta" ? "மருமகன் (Son-in-law)" : "Son-in-law"}</option>
+                <option value="Daughter-in-law">{lang === "ta" ? "மருமகள் (Daughter-in-law)" : "Daughter-in-law"}</option>
+                <option value="Spouse">{lang === "ta" ? "கணவர் / மனைவி (Spouse)" : "Spouse"}</option>
+                <option value="Grandson">{lang === "ta" ? "பேரன் (Grandson)" : "Grandson"}</option>
+                <option value="Granddaughter">{lang === "ta" ? "பேத்தி (Granddaughter)" : "Granddaughter"}</option>
+                <option value="Guardian">{lang === "ta" ? "பாதுகாவலர் (Legal Guardian)" : "Guardian"}</option>
+                <option value="Other">{lang === "ta" ? "பிற உறவினர் (Other Relative)" : "Other Relative"}</option>
+              </select>
             </div>
 
             <div className="form-group">
@@ -180,7 +199,7 @@ export default function AddSeniorModal({ isOpen, onClose, onSeniorAdded, initial
                 type="text"
                 value={formData.emergencyContactPhone}
                 onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
-                placeholder="+91 98765 00003"
+                placeholder="+91 9345403336"
               />
             </div>
           </div>

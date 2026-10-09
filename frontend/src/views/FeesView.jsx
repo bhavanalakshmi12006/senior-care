@@ -50,6 +50,55 @@ export default function FeesView({ onOpenPaymentModal }) {
     return f.status.toLowerCase().replace(/\s+/g, "-") === filter.toLowerCase();
   });
 
+  const handleDownloadExpenseStatement = () => {
+    try {
+      const seniorName = fees[0]?.seniorName || payments[0]?.seniorName || "Senior Citizen";
+      const totalSpent = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+      
+      const csvRows = [
+        ["SENIORCARE HEALTH CENTER - OFFICIAL EXPENSE & PAYMENT STATEMENT"],
+        [`Senior Citizen: ${seniorName}`, `Generated Date: ${new Date().toLocaleDateString()}`],
+        [`Total Medical & Care Expenditure: Rs. ${totalSpent.toLocaleString()}`],
+        [],
+        ["Receipt Code", "Date", "Category", "Service / Purpose of Expenditure", "Amount (INR)", "Payment Mode", "Transaction Ref", "Status"]
+      ];
+
+      payments.forEach((p) => {
+        const matchingFee = fees.find(f => f._id === p.feeId || f.feeCode === p.paymentCode);
+        const purpose = p.notes || matchingFee?.notes || matchingFee?.title || "Routine Geriatric Health & Care Service";
+        const cat = matchingFee?.category || "Elder Care";
+        csvRows.push([
+          p.paymentCode,
+          new Date(p.paidAt).toLocaleDateString(),
+          cat,
+          `"${purpose.replace(/"/g, '""')}"`,
+          p.amount,
+          p.paymentMethod || "UPI",
+          p.transactionRef || "TXN-VERIFIED",
+          "PAID & VERIFIED"
+        ]);
+      });
+
+      const csvString = csvRows.map(r => r.join(",")).join("\n");
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${seniorName.replace(/\s+/g, "_")}_Expense_Statement_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      showToast(
+        lang === "ta" ? "முழுமையான செலவு அறிக்கை (CSV) பதிவிறக்கப்பட்டது!" : "Complete expense statement downloaded successfully!",
+        "success"
+      );
+    } catch (e) {
+      showToast("Failed to export statement", "error");
+    }
+  };
+
   return (
     <div className="view-page-container">
       <div className="view-header-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
@@ -57,24 +106,38 @@ export default function FeesView({ onOpenPaymentModal }) {
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <Receipt className="text-primary" size={26} />
             <h2 style={{ margin: 0 }}>
-              {lang === "ta" ? "மருத்துவ சேவைகள் & கட்டண ரசீதுகள்" : "Care Packages & Payment Receipts"}
+              {lang === "ta" ? "மருத்துவ செலவுகள் & கட்டண ரசீதுகள்" : "Medical Expenses & Official Receipts"}
             </h2>
           </div>
           <p style={{ margin: "0.25rem 0 0", color: "var(--text-muted)" }}>
             {lang === "ta" 
-              ? "முதியோர் மருத்துவ உதவி, ஆய்வக பரிசோதனைகள் மற்றும் பதிவிறக்கக்கூடிய அதிகாரப்பூர்வ ரசீதுகள்."
-              : "Institutional health coverage, verified service settlements, and downloadable payment receipts."}
+              ? "எந்தெந்த விஷயங்களுக்கு எவ்வளவு செலவானது என்ற விரிவான விபரங்கள் மற்றும் பதிவிறக்கக்கூடிய ரசீதுகள்."
+              : "Itemized breakdown of care expenses, specific purposes, settled amounts, and downloadable receipts."}
           </p>
         </div>
 
-        <button 
-          className="btn-primary" 
-          onClick={() => setShowOrderModal(true)}
-          style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.65rem 1.25rem", borderRadius: "10px", fontWeight: "600", boxShadow: "0 4px 14px rgba(23, 107, 135, 0.25)" }}
-        >
-          <TestTube size={18} />
-          <span>{lang === "ta" ? "🔬 ஆய்வக சேவை ஆர்டர் செய்க" : "🔬 Order Care / Lab Service"}</span>
-        </button>
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+          <button 
+            type="button"
+            className="btn-secondary"
+            onClick={handleDownloadExpenseStatement}
+            style={{ display: "flex", alignItems: "center", gap: "0.45rem", padding: "0.6rem 1.1rem", borderRadius: "10px", fontWeight: "700" }}
+          >
+            <Download size={17} />
+            <span>{lang === "ta" ? "📥 முழு செலவு அறிக்கை (CSV)" : "📥 Download Expense Statement"}</span>
+          </button>
+
+          {user?.role !== "admin" && (
+            <button 
+              className="btn-primary" 
+              onClick={() => setShowOrderModal(true)}
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.2rem", borderRadius: "10px", fontWeight: "600", boxShadow: "0 4px 14px rgba(23, 107, 135, 0.25)" }}
+            >
+              <TestTube size={18} />
+              <span>{lang === "ta" ? "🔬 ஆய்வக சேவை பதிவு" : "🔬 Order Care / Lab Service"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Financial & Coverage Summary Strip (NO negative Due banner) */}
@@ -225,34 +288,59 @@ export default function FeesView({ onOpenPaymentModal }) {
               <tr>
                 <th>Receipt Code</th>
                 <th>{t.seniors}</th>
+                <th>{lang === "ta" ? "சேவை & செலவுக்கான நோக்கம் (Purpose)" : "Care Service & Purpose of Expense"}</th>
                 <th>{lang === "ta" ? "தொகை (₹)" : "Amount (₹)"}</th>
                 <th>{t.paymentMethod}</th>
-                <th>Transaction Ref</th>
                 <th>{lang === "ta" ? "செலுத்திய தேதி" : "Payment Date"}</th>
                 <th>{lang === "ta" ? "அதிகாரப்பூர்வ ரசீது" : "Receipt Action"}</th>
               </tr>
             </thead>
             <tbody>
-              {payments.map((p) => (
-                <tr key={p._id}>
-                  <td><strong>{p.paymentCode}</strong></td>
-                  <td>{p.seniorName}</td>
-                  <td className="text-success font-bold">₹{p.amount?.toLocaleString()}</td>
-                  <td><span className="method-tag">{p.paymentMethod}</span></td>
-                  <td><small>{p.transactionRef}</small></td>
-                  <td>{new Date(p.paidAt).toLocaleDateString()}</td>
-                  <td>
-                    <button
-                      className="btn-outline-small"
-                      onClick={() => setActiveReceipt(p)}
-                      style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.35rem 0.75rem", fontSize: "0.78rem" }}
-                    >
-                      <Download size={13} />
-                      <span>{lang === "ta" ? "ரசீது (Download)" : "Receipt"}</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {payments.map((p) => {
+                const matchedFee = fees.find(f => f._id === p.feeId || f.feeCode === p.paymentCode);
+                const purpose = p.notes || matchedFee?.notes || matchedFee?.title || "Routine Elder Health Care Service";
+                const cat = matchedFee?.category || "Elder Care";
+
+                return (
+                  <tr key={p._id}>
+                    <td><strong style={{ color: "#0284c7" }}>{p.paymentCode}</strong></td>
+                    <td>
+                      <strong>{p.seniorName}</strong>
+                      <small style={{ display: "block", color: "var(--text-muted)", fontSize: "0.72rem" }}>🏡 {lang === "ta" ? "இல்லம் (அடையாறு, சென்னை)" : "Home Residence (Adyar, Chennai)"} · 📱 9345403361</small>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: "0.74rem", background: "rgba(2,132,199,0.08)", color: "#0284c7", padding: "0.15rem 0.45rem", borderRadius: "6px", fontWeight: "700", marginRight: "6px" }}>
+                        {cat}
+                      </span>
+                      <span style={{ fontSize: "0.82rem", color: "var(--text-main)" }}>
+                        {purpose}
+                      </span>
+                    </td>
+                    <td className="text-success font-bold" style={{ fontSize: "0.95rem" }}>
+                      ₹{p.amount?.toLocaleString()}
+                    </td>
+                    <td>
+                      <span className="method-tag">{p.paymentMethod}</span>
+                      <small style={{ display: "block", color: "var(--text-muted)", fontSize: "0.7rem" }}>{p.transactionRef}</small>
+                    </td>
+                    <td>{new Date(p.paidAt).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className="btn-outline-small"
+                        onClick={() => setActiveReceipt({
+                          ...p,
+                          title: matchedFee?.title || purpose,
+                          notes: purpose
+                        })}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.4rem 0.8rem", fontSize: "0.78rem", fontWeight: "600" }}
+                      >
+                        <Download size={13} />
+                        <span>{lang === "ta" ? "ரசீது (Download)" : "Download Slip"}</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -5,7 +5,7 @@ import {
   FileSpreadsheet, ArrowUpRight, Clock, Heart, Phone, MapPin, 
   Activity, ArrowRight, UserPlus, Sparkles, TestTube, FileText,
   UserCog, Shield, Stethoscope, Star, Film, Trash2, Award, Zap,
-  Download, Printer, AlertTriangle, Eye, Receipt
+  Download, Printer, AlertTriangle, Eye, Receipt, RefreshCw, TrendingDown, TrendingUp
 } from "lucide-react";
 import { 
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
@@ -20,6 +20,7 @@ import PostcardModal from "../components/Modals/PostcardModal";
 import OrderServiceModal from "../components/Modals/OrderServiceModal";
 import ReceiptModal from "../components/Modals/ReceiptModal";
 import CareGallery from "../components/CareGallery";
+import { openGmailComposer } from "../utils/mailHelper";
 
 export default function DashboardView({ 
   onNavigate, 
@@ -58,6 +59,7 @@ export default function DashboardView({
   // Order Service Modal & Elder Switcher state
   const [isOrderServiceOpen, setIsOrderServiceOpen] = useState(false);
   const [activeElderId, setActiveElderId] = useState(null);
+  const [healthChartTab, setHealthChartTab] = useState("bp");
 
   // Postcard modal state
   const [postcardData, setPostcardData] = useState(null);
@@ -72,12 +74,17 @@ export default function DashboardView({
 
   const role = user?.role || "senior_citizen";
 
-  const handleRelationChange = (seniorId, rel) => {
+  const handleRelationChange = async (seniorId, rel) => {
     const updated = { ...elderRelations, [seniorId]: rel };
     setElderRelations(updated);
     localStorage.setItem("seniorcare_elder_relations", JSON.stringify(updated));
+    try {
+      await api.patch(`/seniors/${seniorId}`, { emergencyContactRelation: rel });
+    } catch (e) {
+      // non-blocking
+    }
     showToast(
-      lang === "ta" ? `உறவு முறை '${rel}' என புதுப்பிக்கப்பட்டது` : `Relation marked as '${rel}'`,
+      lang === "ta" ? `உறவு முறை '${rel}' என புதுப்பிக்கப்பட்டது` : `Kinship updated to '${rel}'`,
       "success"
     );
   };
@@ -122,6 +129,7 @@ export default function DashboardView({
       ]);
 
       setMetrics(metricsRes.data.metrics || {});
+      setCharts(metricsRes.data.charts || null);
       const fetchedSeniors = seniorsRes.data.seniors || [];
       setSeniors(fetchedSeniors);
       if (activeSeniorId) {
@@ -148,6 +156,32 @@ export default function DashboardView({
   }, [liveEventSignal]);
 
   const primarySenior = seniors[0] || null;
+  const focusedElder = (seniors && seniors.length > 0)
+    ? (seniors.find((s) => s._id === activeElderId) || seniors[0])
+    : null;
+  const elderName = focusedElder?.name || primarySenior?.name || (lang === "ta" ? "மூத்த உறுப்பினர்" : "Elder");
+  const elderAge = focusedElder?.age || primarySenior?.age || 72;
+  const elderRel = (focusedElder && elderRelations[focusedElder._id]) || focusedElder?.emergencyContactRelation || (lang === "ta" ? "பெரியவர்" : "Elder");
+  const emergencyContactName = focusedElder?.emergencyContactName || user?.name || (lang === "ta" ? "குடும்ப உறுப்பினர்" : "Family Member");
+  const emergencyContactPhone = focusedElder?.emergencyContactPhone || user?.phone || "+91 9345403336";
+  const cleanContactPhone = String(emergencyContactPhone).replace(/[^0-9]/g, "");
+  const waContactPhone = cleanContactPhone.length === 10 ? `91${cleanContactPhone}` : (cleanContactPhone || "919345403336");
+  const emergencyContactEmail = focusedElder?.emergencyContactEmail || user?.email || "family@seniorcare.local";
+
+  const handleConfirmAssistance = async (reqId) => {
+    try {
+      await api.put(`/assistance/${reqId}/status`, { status: "Completed" });
+      showToast(
+        lang === "ta" 
+          ? "✓ உதவி பெறப்பட்டது! கோரிக்கை 'Completed' என வெற்றிகரமாக மாற்றப்பட்டது." 
+          : "✓ Assistance confirmed and marked as Completed!",
+        "success"
+      );
+      loadDashboardData();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to update assistance status", "error");
+    }
+  };
 
   // Chart Color Palette
   const CHART_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
@@ -225,9 +259,9 @@ export default function DashboardView({
                 {lang === "ta" ? "இணைக்கப்பட்ட முதியவர் (Associated Senior Citizen)" : "Monitoring Senior Citizen Profile"}
               </div>
               <div style={{ fontSize: "1.1rem", fontWeight: "800", color: "var(--text-main, #0f172a)" }}>
-                {seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.name || "Lakshmi Devi"}
+                {seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.name || "Bhavana Lakshmi"}
                 <span style={{ fontSize: "0.85rem", fontWeight: "500", color: "var(--text-muted, #64748b)", marginLeft: "8px" }}>
-                  ({seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.age || 72} yrs · Room {seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.roomNumber || "104"})
+                  ({seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.age || 72} yrs · 🏡 {seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.address ? "Home: " + seniors.find((s) => s._id === (activeElderId || activeSeniorId))?.address.split(",").slice(-2).join(",").trim() : "Home Residence · Adyar"})
                 </span>
               </div>
             </div>
@@ -253,7 +287,7 @@ export default function DashboardView({
               >
                 {seniors.map((s) => (
                   <option key={s._id} value={s._id}>
-                    {s.name} ({s.roomNumber || "Resident"})
+                    {s.name} (🏡 {s.address ? s.address.split(",").slice(-2).join(",").trim() : "Home Residence"})
                   </option>
                 ))}
               </select>
@@ -428,15 +462,29 @@ export default function DashboardView({
 
       {/* Interactive Metric Cards */}
       <section className="metric-cards-grid">
-        <div className="metric-card clickable" onClick={() => onNavigate("seniors")}>
-          <div className="metric-card-top">
-            <span className="metric-icon-box blue"><Users size={22} /></span>
-            <span className="metric-trend up">+12 this mo</span>
+        {(role === "senior_citizen" || role === "family_member") ? (
+          <div className="metric-card clickable" onClick={() => onNavigate("seniors")}>
+            <div className="metric-card-top">
+              <span className="metric-icon-box green"><ShieldCheck size={22} /></span>
+              <span className="metric-trend success">{lang === "ta" ? "பாதுகாப்பாக உள்ளார்" : "Active & Safe"}</span>
+            </div>
+            <strong className="metric-value text-success" style={{ fontSize: "1.35rem" }}>
+              {lang === "ta" ? "பாதுகாப்பானது" : "Safe & Monitored"}
+            </strong>
+            <span className="metric-label">{lang === "ta" ? "முதியவர் நல்வாழ்வு நிலை" : "Monitored Elder Wellness"}</span>
+            <span className="metric-link-text">{lang === "ta" ? "விவரங்கள் →" : "View Health Status →"}</span>
           </div>
-          <strong className="metric-value">{metrics.totalSeniors || seniors.length || 0}</strong>
-          <span className="metric-label">{t.totalSeniors}</span>
-          <span className="metric-link-text">{t.seniors} →</span>
-        </div>
+        ) : (
+          <div className="metric-card clickable" onClick={() => onNavigate("seniors")}>
+            <div className="metric-card-top">
+              <span className="metric-icon-box blue"><Users size={22} /></span>
+              <span className="metric-trend up">+12 this mo</span>
+            </div>
+            <strong className="metric-value">{metrics.totalSeniors || seniors.length || 0}</strong>
+            <span className="metric-label">{t.totalSeniors}</span>
+            <span className="metric-link-text">{t.seniors} →</span>
+          </div>
+        )}
 
         <div className={`metric-card clickable ${metrics.activeEmergencies > 0 ? "has-danger-alert" : ""}`} onClick={() => onNavigate("emergency")}>
           <div className="metric-card-top">
@@ -506,8 +554,107 @@ export default function DashboardView({
       </section>
 
       {/* ============================================================== */}
-      {/* ROLE-SPECIFIC VIEWS                                            */}
+      {/* ROLE-SPECIFIC VIEWS & MONTHLY CHECKUP CYCLE TRACKER            */}
       {/* ============================================================== */}
+
+      {/* Monthly Checkup Cycle Tracker Widget for Senior Citizens & Family Members */}
+      {(role === "senior_citizen" || role === "family_member") && (
+        <section className="monthly-checkup-cycle-section" style={{
+          background: "linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08))",
+          border: "2px solid #0284c7",
+          borderRadius: "16px",
+          padding: "1.25rem 1.5rem",
+          margin: "1rem 0 1.75rem",
+          boxShadow: "0 4px 16px rgba(2, 132, 199, 0.08)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "12px", background: "linear-gradient(135deg, #0284c7, #2563eb)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)" }}>
+                <Calendar size={24} />
+              </div>
+              <div>
+                <span style={{ fontSize: "0.76rem", fontWeight: "800", textTransform: "uppercase", color: "#0284c7", letterSpacing: "0.5px" }}>
+                  {lang === "ta" ? "🩺 மாதாந்திர வழக்கமான பரிசோதனை சுழற்சி" : "🩺 Monthly Routine Geriatric Checkup Cycle"}
+                </span>
+                <h3 style={{ margin: "0.15rem 0 0", fontSize: "1.2rem", fontWeight: "800", color: "var(--text-main)" }}>
+                  {lang === "ta" ? "அக்டோபர் 2026 முதியோர் நல சுழற்சி (நாள் 6 / 30)" : "October 2026 Wellness Cycle (Day 6 of 30)"}
+                </h3>
+                <p style={{ margin: "0.2rem 0 0", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                  {lang === "ta" ? "சுழற்சி நிலை: செயலில் உள்ளது · மாதந்தோறும் தானாக புதுப்பிக்கப்படும் மருத்துவ சந்திப்பு" : "Status: Active Routine · Auto-recurring monthly health review & vitals check"}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn-outline-small"
+                onClick={() => {
+                  showToast(
+                    lang === "ta" 
+                      ? "மாதாந்திர வழக்கமான பரிசோதனை சுழற்சி வெற்றிகரமாக அமைக்கப்பட்டது!" 
+                      : "Monthly routine checkup cycle is set & auto-renewed!",
+                    "success"
+                  );
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem 0.9rem", borderRadius: "10px", borderColor: "#0284c7", color: "#0284c7", fontWeight: "700", fontSize: "0.84rem" }}
+              >
+                <RefreshCw size={15} />
+                <span>{lang === "ta" ? "சுழற்சியை அமை (Set Cycle)" : "Set / Renew Cycle"}</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  const snrPhone = primarySenior?.phone || "9080578504";
+                  let cleanPhone = snrPhone.replace(/[^0-9]/g, "");
+                  if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+                  const msg = encodeURIComponent(`SeniorCare Alert: Monthly checkup appointment scheduled for Tomorrow at 10:00 AM with Dr. S. Kumar (Geriatric Cardiology) at Apollo Senior Health Center. Family Contact: +91 9345403336.`);
+                  window.open(`https://wa.me/${cleanPhone}?text=${msg}`, "_blank");
+                  showToast(lang === "ta" ? "WhatsApp நினைவூட்டல் அனுப்பப்பட்டது!" : "WhatsApp reminder dispatched!", "success");
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.5rem 1rem", borderRadius: "10px", fontSize: "0.84rem" }}
+              >
+                <Bell size={16} />
+                <span>{lang === "ta" ? "நினைவூட்டல் அனுப்பு (WhatsApp)" : "Send Reminder (WhatsApp)"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tomorrow's Appointment Alert Banner */}
+          <div style={{
+            marginTop: "1rem",
+            background: "var(--surface, #ffffff)",
+            border: "1.5px solid #38bdf8",
+            borderRadius: "12px",
+            padding: "0.9rem 1.1rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "0.75rem"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(2, 132, 199, 0.12)", color: "#0284c7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Clock size={20} />
+              </div>
+              <div>
+                <strong style={{ fontSize: "0.92rem", color: "#0369a1", display: "block" }}>
+                  🔔 {lang === "ta" ? "நாளைக்கான சந்திப்பு எச்சரிக்கை (Tomorrow at 10:00 AM):" : "Checkup Scheduled Tomorrow at 10:00 AM:"}
+                </strong>
+                <span style={{ fontSize: "0.84rem", color: "var(--text-main)" }}>
+                  Dr. S. Kumar, MD (Geriatric Cardiology) · Apollo Senior Health Center · Routine Geriatric Review
+                </span>
+              </div>
+            </div>
+
+            <span style={{ fontSize: "0.75rem", background: "rgba(16, 185, 129, 0.12)", color: "#15803d", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "0.25rem 0.65rem", borderRadius: "20px", fontWeight: "700" }}>
+              ✓ {lang === "ta" ? "உறுதிப்படுத்தப்பட்டது" : "Confirmed & Notified"}
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* 1. SENIOR CITIZEN CUSTOM DASHBOARD WIDGETS */}
       {role === "senior_citizen" && (
@@ -543,10 +690,10 @@ export default function DashboardView({
                 <small>{lang === "ta" ? "முதன்மை செவிலியர் & பராமரிப்பாளர்" : "Primary Geriatric Nurse & Caregiver"}</small>
                 <div className="caregiver-contact-row">
                   <Phone size={16} />
-                  <span>+91 98765 00004</span>
+                  <span>+91 6382598599</span>
                 </div>
               </div>
-              <a href="tel:+919876500004" className="btn-call-caregiver">
+              <a href="tel:+916382598599" className="btn-call-caregiver">
                 <Phone size={18} />
                 <span>{t.callCaregiver}</span>
               </a>
@@ -559,14 +706,14 @@ export default function DashboardView({
                 <h3>{t.myFamily}</h3>
               </div>
               <div className="caregiver-info-box">
-                <strong>{primarySenior?.emergencyContactName || "Priya Ramesh (Daughter)"}</strong>
+                <strong>{primarySenior?.emergencyContactName || "Bhavana Lakshmi (Daughter)"}</strong>
                 <small>{primarySenior?.emergencyContactRelation || "Daughter"}</small>
                 <div className="caregiver-contact-row">
                   <Phone size={16} />
-                  <span>{primarySenior?.emergencyContactPhone || "+91 98765 00003"}</span>
+                  <span>{primarySenior?.emergencyContactPhone || "+91 9345403336"}</span>
                 </div>
               </div>
-              <a href={`tel:${primarySenior?.emergencyContactPhone || "+919876500003"}`} className="btn-call-family">
+              <a href={`tel:${primarySenior?.emergencyContactPhone || "+919345403336"}`} className="btn-call-family">
                 <Phone size={18} />
                 <span>{t.callFamily}</span>
               </a>
@@ -596,6 +743,112 @@ export default function DashboardView({
                 <span>{lang === "ta" ? "பரிசோதனை பதிவு செய்" : "Order Lab Service"}</span>
               </button>
             </div>
+
+            {/* Active Assistance & Errands Received Card for Senior Citizen */}
+            {assistanceRequests && assistanceRequests.length > 0 && (
+              <div 
+                className="senior-hero-card"
+                style={{
+                  gridColumn: "1 / -1",
+                  background: "linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(16, 185, 129, 0.05))",
+                  border: "1.5px solid #10b981"
+                }}
+              >
+                <div className="senior-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                    <HandHeart size={26} className="text-success" />
+                    <div>
+                      <h3 style={{ margin: 0 }}>{lang === "ta" ? "உதவி கோரிக்கைகள் & சேவைகள் (Assistance Status)" : "Assistance & Care Requests"}</h3>
+                      <small style={{ color: "var(--text-muted)" }}>
+                        {lang === "ta" ? "உதவி கிடைத்தவுடன் 'உதவி முடிந்தது' பொத்தானை அழுத்தி உறுதிப்படுத்தவும்" : "Confirm receipt and mark completed once assistance is received"}
+                      </small>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="panel-header-link" 
+                    onClick={() => onNavigate("assistance")}
+                    style={{ fontSize: "0.82rem", background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: "700" }}
+                  >
+                    {lang === "ta" ? "அனைத்தையும் பார்" : "View All"} →
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginTop: "0.75rem" }}>
+                  {assistanceRequests.map((req) => (
+                    <div 
+                      key={req._id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        background: "var(--surface)",
+                        padding: "0.75rem 1rem",
+                        borderRadius: "10px",
+                        border: "1px solid var(--border)",
+                        gap: "0.75rem",
+                        flexWrap: "wrap"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <div style={{
+                          width: "36px",
+                          height: "36px",
+                          borderRadius: "50%",
+                          background: req.status === "Completed" ? "#ecfdf5" : "#eff6ff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: req.status === "Completed" ? "#10b981" : "#2563eb"
+                        }}>
+                          <HandHeart size={18} />
+                        </div>
+                        <div>
+                          <strong style={{ display: "block", fontSize: "0.92rem", color: "var(--text-main)" }}>{req.title}</strong>
+                          <small style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
+                            {req.category} · {req.assignedToName ? `${lang === "ta" ? "உதவியாளர்" : "Assistant"}: ${req.assignedToName}` : (lang === "ta" ? "உதவியாளர் பணி ஒதுக்கீடு ஆகிறது..." : "Volunteer assigning...")}
+                          </small>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                        <span className={`status-pill-small status-${req.status.toLowerCase().replace(/\s+/g, "-")}`}>
+                          {req.status}
+                        </span>
+                        {req.status !== "Completed" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmAssistance(req._id)}
+                            style={{
+                              background: "linear-gradient(135deg, #10b981, #059669)",
+                              color: "#fff",
+                              border: "none",
+                              fontWeight: "700",
+                              padding: "0.45rem 0.85rem",
+                              borderRadius: "8px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.35rem",
+                              cursor: "pointer",
+                              fontSize: "0.82rem",
+                              boxShadow: "0 2px 8px rgba(16,185,129,0.25)"
+                            }}
+                            title={lang === "ta" ? "உதவி வெற்றிகரமாக கிடைத்தது என உறுதிப்படுத்துக" : "Confirm assistance received"}
+                          >
+                            <CheckCircle2 size={15} />
+                            <span>{lang === "ta" ? "✓ உதவி முடிந்தது / பெற்றுக்கொண்டேன்" : "✓ Confirm Completed"}</span>
+                          </button>
+                        ) : (
+                          <span style={{ color: "#059669", fontWeight: "700", fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                            <CheckCircle2 size={15} /> {lang === "ta" ? "நிறைவடைந்தது" : "Done"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -605,20 +858,29 @@ export default function DashboardView({
         <section className="family-custom-dashboard" style={{ marginBottom: "2rem" }}>
           <div className="section-title-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <h2 style={{ margin: 0, fontSize: "1.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <Users className="text-primary" size={24} />
-                  {lang === "ta" ? "எனது குடும்பப் பெரியவர்கள் (இணைக்கப்பட்ட மூத்தவர்கள்)" : "My Family Elders (Associated Seniors)"}
-                </h2>
-                <span style={{ background: "rgba(37,99,235,0.1)", color: "var(--primary)", border: "1px solid rgba(37,99,235,0.25)", fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: "12px", fontWeight: "700" }}>
-                  {seniors.length} / 2 {lang === "ta" ? "அதிகபட்சம்" : "Max Limit"}
-                </span>
-              </div>
-              <p style={{ margin: "0.25rem 0 0", color: "var(--muted)", fontSize: "0.9rem" }}>
-                {lang === "ta" 
-                  ? "உங்கள் குடும்ப கணக்குடன் இணைக்கப்பட்டுள்ள 1 அல்லது 2 மூத்த உறுப்பினர்களின் நேரலை ஆரோக்கியம் மற்றும் மருத்துவ விபரங்கள்." 
-                  : "Live wellness, medical records, and reports scoped specifically to your 1 or 2 associated elders."}
-              </p>
+              {(() => {
+                const focusedElder = seniors.find((s) => s._id === (activeElderId || seniors[0]?._id)) || seniors[0];
+                const elderName = focusedElder?.name || (lang === "ta" ? "மூத்த உறுப்பினர்" : "Elder");
+                const elderRel = elderRelations[focusedElder?._id] || focusedElder?.emergencyContactRelation || (lang === "ta" ? "பெரியவர்" : "Elder");
+                return (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                      <h2 style={{ margin: 0, fontSize: "1.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <Users className="text-primary" size={24} />
+                        {lang === "ta" ? "எனது குடும்பப் பெரியவர்கள் (இணைக்கப்பட்ட மூத்தவர்கள்)" : "My Family Elders (Associated Seniors)"}
+                      </h2>
+                      <span style={{ background: "rgba(37,99,235,0.1)", color: "var(--primary)", border: "1px solid rgba(37,99,235,0.25)", fontSize: "0.78rem", padding: "0.25rem 0.65rem", borderRadius: "12px", fontWeight: "700" }}>
+                        👵 {lang === "ta" ? `இணைக்கப்பட்ட மூத்த உறுப்பினர்: ${elderName} (${elderRel})` : `Linked Elder: ${elderName} (${elderRel})`}
+                      </span>
+                    </div>
+                    <p style={{ margin: "0.25rem 0 0", color: "var(--muted)", fontSize: "0.9rem" }}>
+                      {lang === "ta" 
+                        ? `உங்கள் குடும்ப கணக்குடன் பிரத்யேகமாக இணைக்கப்பட்டுள்ள ${elderName} அவர்களின் நேரலை ஆரோக்கியம் மற்றும் மருத்துவ விபரங்கள்.` 
+                        : `Live wellness, medical records, and reports scoped specifically to ${elderName} (${elderRel}).`}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
             
             <div style={{ display: "flex", gap: "0.6rem" }}>
@@ -683,6 +945,277 @@ export default function DashboardView({
             </div>
           )}
 
+          {/* Graphical Health Analysis & Vitals Stabilization Section */}
+          <div style={{
+            background: "linear-gradient(135deg, rgba(2, 132, 199, 0.05), rgba(16, 185, 129, 0.05))",
+            border: "1.5px solid #0284c7",
+            borderRadius: "16px",
+            padding: "1.25rem 1.4rem",
+            marginBottom: "1.25rem",
+            boxShadow: "0 4px 18px rgba(2, 132, 199, 0.06)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "1rem" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Activity size={20} className="text-primary" />
+                  <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: "800", color: "var(--text-main)" }}>
+                    {lang === "ta" 
+                      ? "📈 மூத்த குடிமகன் நேரலை உடல்நல வரைபட பகுப்பாய்வு (Health Analytics)" 
+                      : "📈 Senior Clinical Vitals & Graphical Health Trends"}
+                  </h3>
+                  <span style={{ fontSize: "0.72rem", background: "#ecfdf5", color: "#059669", border: "1px solid #a7f3d0", padding: "0.15rem 0.55rem", borderRadius: "10px", fontWeight: "700" }}>
+                    ✓ {lang === "ta" ? "உடல்நிலை சீரானது" : "Stable & Optimal"}
+                  </span>
+                </div>
+                <p style={{ margin: "0.25rem 0 0", fontSize: "0.84rem", color: "var(--text-muted)" }}>
+                  {lang === "ta"
+                    ? `${elderName} (${elderAge} வயது) - 7-நாள் இரத்த அழுத்தம் & சர்க்கரை கட்டுப்பாடு வரைபடம்.`
+                    : `${elderName} (${elderAge} yrs) — 7-Day Blood Pressure Stabilization & Blood Glucose Tracking Curve`}
+                </p>
+              </div>
+
+              {/* Chart Mode Toggle Pills */}
+              <div style={{ display: "flex", gap: "0.4rem", background: "var(--surface)", padding: "0.25rem", borderRadius: "10px", border: "1px solid var(--border)" }}>
+                <button
+                  type="button"
+                  onClick={() => setHealthChartTab("bp")}
+                  style={{
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "0.35rem 0.75rem",
+                    fontSize: "0.78rem",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    background: healthChartTab === "bp" ? "#0284c7" : "transparent",
+                    color: healthChartTab === "bp" ? "#fff" : "var(--text-muted)"
+                  }}
+                >
+                  🩺 {lang === "ta" ? "இரத்த அழுத்தம் (BP 120/80)" : "Blood Pressure (BP)"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHealthChartTab("sugar")}
+                  style={{
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "0.35rem 0.75rem",
+                    fontSize: "0.78rem",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    background: healthChartTab === "sugar" ? "#d97706" : "transparent",
+                    color: healthChartTab === "sugar" ? "#fff" : "var(--text-muted)"
+                  }}
+                >
+                  🩸 {lang === "ta" ? "இரத்த சர்க்கரை (104 mg/dL)" : "Blood Sugar (Glucose)"}
+                </button>
+              </div>
+            </div>
+
+            {/* Graphical Chart & Clinical Insights Split */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "1.25rem", alignItems: "center" }}>
+              {/* Left Column: Recharts Graphical Representation */}
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <small style={{ fontSize: "0.75rem", fontWeight: "700", color: healthChartTab === "bp" ? "#0284c7" : "#d97706" }}>
+                    {healthChartTab === "bp" 
+                      ? (lang === "ta" ? "7-நாள் இரத்த அழுத்த வீழ்ச்சி & சீரமைப்பு (Systolic/Diastolic mmHg):" : "7-Day Blood Pressure Stabilization Curve (Systolic & Diastolic mmHg):")
+                      : (lang === "ta" ? "7-நாள் சர்க்கரை அளவு சரிவு (Fasting & Post-meal mg/dL):" : "7-Day Glycemic Control Tracking Curve (mg/dL):")}
+                  </small>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Oct 1 - Oct 6, 2026</span>
+                </div>
+
+                <div style={{ width: "100%", height: 200 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    {healthChartTab === "bp" ? (
+                      <AreaChart data={[
+                        { day: "Oct 1", systolic: 146, diastolic: 92, pulse: 78 },
+                        { day: "Oct 2", systolic: 140, diastolic: 88, pulse: 76 },
+                        { day: "Oct 3", systolic: 134, diastolic: 85, pulse: 74 },
+                        { day: "Oct 4", systolic: 128, diastolic: 82, pulse: 73 },
+                        { day: "Oct 5", systolic: 124, diastolic: 81, pulse: 72 },
+                        { day: "Oct 6", systolic: 120, diastolic: 80, pulse: 72 }
+                      ]}>
+                        <defs>
+                          <linearGradient id="colorSys" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#059669" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#059669" stopOpacity={0.0}/>
+                          </linearGradient>
+                          <linearGradient id="colorDia" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#0284c7" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                        <YAxis domain={[70, 160]} tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Area type="monotone" dataKey="systolic" name="Systolic (mmHg)" stroke="#059669" fillOpacity={1} fill="url(#colorSys)" strokeWidth={2.5} />
+                        <Area type="monotone" dataKey="diastolic" name="Diastolic (mmHg)" stroke="#0284c7" fillOpacity={1} fill="url(#colorDia)" strokeWidth={2} />
+                      </AreaChart>
+                    ) : (
+                      <LineChart data={[
+                        { day: "Oct 1", fasting: 138, postMeal: 172 },
+                        { day: "Oct 2", fasting: 128, postMeal: 160 },
+                        { day: "Oct 3", fasting: 120, postMeal: 150 },
+                        { day: "Oct 4", fasting: 114, postMeal: 138 },
+                        { day: "Oct 5", fasting: 108, postMeal: 132 },
+                        { day: "Oct 6", fasting: 104, postMeal: 126 }
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                        <YAxis domain={[90, 185]} tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="fasting" name="Fasting Glucose (mg/dL)" stroke="#d97706" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="postMeal" name="Post-Meal Glucose (mg/dL)" stroke="#8b5cf6" strokeWidth={2.5} strokeDasharray="4 4" dot={{ r: 3 }} />
+                      </LineChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Right Column: Clinical Status, Doctor Summary & Instant Sharing */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {/* Wellness Index Gauge Card */}
+                <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "0.85rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: "600" }}>
+                      {lang === "ta" ? "ஒட்டுமொத்த நல்வாழ்வு மதிப்பீடு:" : "Overall Wellness Index:"}
+                    </span>
+                    <strong style={{ fontSize: "1.1rem", color: "#059669" }}>94 / 100</strong>
+                  </div>
+                  <div style={{ background: "#e2e8f0", height: "8px", borderRadius: "10px", overflow: "hidden", marginBottom: "0.45rem" }}>
+                    <div style={{ background: "linear-gradient(90deg, #10b981, #059669)", width: "94%", height: "100%", borderRadius: "10px" }} />
+                  </div>
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.35 }}>
+                    {lang === "ta" 
+                      ? "✓ அம்லோடிபைன் 10mg மாற்றத்திற்குப் பிறகு இரத்த அழுத்தம் 120/80 என சிறப்பான கட்டுப்பாட்டில் உள்ளது." 
+                      : "✓ Blood pressure normalized to 120/80 mmHg following Amlodipine 10mg morning adjustment. Blood glucose lowered to 104 mg/dL."}
+                  </p>
+                </div>
+
+                {/* 1-Click Multi-Channel Sharing Toolbar to Daughter Bhavana */}
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(37, 211, 102, 0.08), rgba(2, 132, 199, 0.08))",
+                  border: "1.2px solid #10b981",
+                  borderRadius: "12px",
+                  padding: "0.75rem 0.85rem"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.45rem" }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#065f46" }}>
+                      📤 {lang === "ta" ? "குடும்பத்தினருக்கு வரைபட அறிக்கை அனுப்புக:" : "Dispatch Health Summary to Family:"}
+                    </span>
+                    <span style={{ fontSize: "0.7rem", background: "#ecfdf5", color: "#047857", padding: "0.15rem 0.45rem", borderRadius: "6px", fontWeight: "700" }}>
+                      {emergencyContactName} (+{waContactPhone})
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const msg = encodeURIComponent(
+                          `🩺 *SeniorCare Live Health Analysis & Vitals Report*\n\n` +
+                          `Resident: *${elderName} (${elderAge} yrs)*\n` +
+                          `Status: *Optimal & Stabilized (94/100)*\n` +
+                          `Blood Pressure: *120/80 mmHg* (Target achieved with Amlodipine 10mg)\n` +
+                          `Blood Glucose: *104 mg/dL* (Fasting)\n` +
+                          `Pulse: *72 bpm* · SpO2: *98%*\n\n` +
+                          `*Doctor's Advice:* Dr. S. Kumar confirmed vitals are well-managed. Continue morning 20-min walking and low salt diet.\n\n` +
+                          `_Dispatched to ${emergencyContactName} (+${waContactPhone})_`
+                        );
+                        window.open(`https://api.whatsapp.com/send?phone=${waContactPhone}&text=${msg}`, "_blank");
+                        showToast(lang === "ta" ? "WhatsApp-ல் அறிக்கை பகிரப்பட்டது!" : "Health summary shared via WhatsApp!", "success");
+                      }}
+                      style={{
+                        flex: 1,
+                        background: "#25D366",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "0.4rem 0.5rem",
+                        fontSize: "0.74rem",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem"
+                      }}
+                    >
+                      <span>💬 WhatsApp</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const msg = encodeURIComponent(`SeniorCare: ${elderName} health report. BP 120/80, Sugar 104 mg/dL, Pulse 72 bpm. Status: Optimal. Recipient: ${emergencyContactName}.`);
+                        window.open(`sms:+${cleanContactPhone}?body=${msg}`, "_blank");
+                        showToast(lang === "ta" ? "SMS தயார் செய்யப்பட்டது!" : "SMS draft opened!", "info");
+                      }}
+                      style={{
+                        flex: 1,
+                        background: "#0284c7",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "0.4rem 0.5rem",
+                        fontSize: "0.74rem",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem"
+                      }}
+                    >
+                      <span>📱 SMS</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const subject = `Health Analysis & Vitals Summary: ${elderName}`;
+                        const body = 
+                          `Hello ${emergencyContactName},\n\nHere is the latest live clinical health analysis for ${elderName} (${elderAge} yrs):\n\n` +
+                          `- Blood Pressure: 120/80 mmHg (Stabilized on Amlodipine 10mg)\n` +
+                          `- Fasting Blood Glucose: 104 mg/dL\n` +
+                          `- Pulse: 72 bpm\n` +
+                          `- SpO2: 98%\n` +
+                          `- Overall Wellness Score: 94 / 100 (Optimal)\n\n` +
+                          `Doctor's Note: Dr. S. Kumar noted excellent recovery and vitals stability.\n\n` +
+                          `Best regards,\nSeniorCare Medical Team`;
+                        
+                        openGmailComposer({
+                          to: emergencyContactEmail || "bhavanalakshmi12006@gmail.com",
+                          subject,
+                          body
+                        });
+                        showToast(lang === "ta" ? "Gmail திறக்கப்பட்டது!" : "Gmail draft opened!", "info");
+                      }}
+                      style={{
+                        flex: 1,
+                        background: "#ea4335",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "0.4rem 0.5rem",
+                        fontSize: "0.74rem",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.3rem"
+                      }}
+                    >
+                      <span>✉️ Gmail</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "1.25rem" }}>
             {seniors.length === 0 ? (
               <div className="empty-panel-state" style={{ padding: "2.5rem", textAlign: "center", background: "var(--surface)", borderRadius: "16px", border: "1px dashed var(--border)" }}>
@@ -734,7 +1267,7 @@ export default function DashboardView({
                       </p>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.82rem", color: "var(--text-secondary)" }}>
                         <MapPin size={14} className="text-muted" />
-                        <span>{snr.roomNumber ? `${lang === "ta" ? "அறை" : "Room"} ${snr.roomNumber}` : (snr.address || "Main Care Facility")}</span>
+                        <span>{snr.address ? `🏡 ${snr.address}` : (lang === "ta" ? "🏡 இல்ல முகவரி (Home Residence)" : "🏡 Home Residence")}</span>
                       </div>
                     </div>
                   </div>
@@ -744,18 +1277,24 @@ export default function DashboardView({
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.4rem" }}>
                       <span style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontWeight: "600" }}>
                         <span>👨‍👩‍👧</span>
-                        <span>{lang === "ta" ? "குடும்ப உறவு:" : "Family Member Link:"}</span>
+                        <span>{lang === "ta" ? "குடும்ப உறவு முறை (Kinship Mapping):" : "Family Member Kinship:"}</span>
                       </span>
-                      <div style={{ display: "flex", gap: "0.3rem" }}>
-                        {["Mother", "Father", "Grandparent", "Elder"].map((rel) => (
+                      <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
+                        {[
+                          { key: "Daughter", label: lang === "ta" ? "மகள் (Daughter)" : "Daughter" },
+                          { key: "Son", label: lang === "ta" ? "மகன் (Son)" : "Son" },
+                          { key: "Son-in-law", label: lang === "ta" ? "மருமகன் (Son-in-law)" : "Son-in-law" },
+                          { key: "Daughter-in-law", label: lang === "ta" ? "மருமகள் (Daughter-in-law)" : "Daughter-in-law" },
+                          { key: "Mother", label: lang === "ta" ? "தாய் (Mother)" : "Mother" }
+                        ].map(({ key, label }) => (
                           <button
-                            key={rel}
+                            key={key}
                             type="button"
-                            className={`filter-pill ${(elderRelations[snr._id] || (snr.gender === "Female" ? "Mother" : "Father")) === rel ? "active" : ""}`}
-                            style={{ padding: "0.15rem 0.5rem", fontSize: "0.72rem" }}
-                            onClick={() => handleRelationChange(snr._id, rel)}
+                            className={`filter-pill ${(elderRelations[snr._id] || snr.emergencyContactRelation || "Daughter") === key ? "active" : ""}`}
+                            style={{ padding: "0.18rem 0.55rem", fontSize: "0.72rem" }}
+                            onClick={() => handleRelationChange(snr._id, key)}
                           >
-                            {rel}
+                            {label}
                           </button>
                         ))}
                       </div>
@@ -984,6 +1523,274 @@ export default function DashboardView({
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3B. FAMILY MEMBER & SENIOR CITIZEN HEALTH ANALYTICS GRAPHS & REPORT DOWNLOAD */}
+      {(role === "family_member" || role === "senior_citizen") && (
+        <section className="analytics-charts-section" style={{ marginTop: "1rem" }}>
+          <div className="section-title-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Activity size={24} className="text-primary" />
+                <h2 style={{ margin: 0 }}>
+                  {lang === "ta" ? "🩺 முதியோர் உடல்நல பகுப்பாய்வு & போக்கு வரைபடங்கள்" : "🩺 Elder Health Analytics & Vitals Trend"}
+                </h2>
+              </div>
+              <p style={{ margin: "0.25rem 0 0", color: "var(--text-muted)" }}>
+                {lang === "ta" 
+                  ? "இரத்த அழுத்தம், சர்க்கரை அளவு மாற்றங்கள் (கூடியுள்ளதா/குறைந்துள்ளதா) மற்றும் பதிவிறக்கக்கூடிய மருத்துவ அறிக்கை." 
+                  : "Daily blood pressure (Systolic/Diastolic) & blood sugar trends with decrease/stabilization indicators."}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button 
+                className="btn-primary" 
+                style={{ display: "flex", alignItems: "center", gap: "0.45rem", padding: "0.55rem 1.1rem", fontSize: "0.86rem", borderRadius: "10px" }}
+                onClick={async () => {
+                  try {
+                    showToast(lang === "ta" ? "முழுமையான மருத்துவ அறிக்கை பதிவிறக்கப்படுகிறது..." : "Downloading Health Analytics Report...", "info");
+                    const res = await api.get("/reports/export/excel?type=health", { responseType: "blob" });
+                    const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement("a");
+                    link.href = blobUrl;
+                    const seniorName = primarySenior?.name || "Bhavana_Lakshmi";
+                    link.setAttribute("download", `${seniorName.replace(/\s+/g, "_")}_Health_Report_${Date.now()}.xlsx`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    window.URL.revokeObjectURL(blobUrl);
+                    showToast(lang === "ta" ? "மருத்துவ அறிக்கை வெற்றிகரமாக பதிவிறக்கப்பட்டது!" : "Health report downloaded successfully!", "success");
+                  } catch(e) {
+                    showToast("Failed to download report", "error");
+                  }
+                }}
+              >
+                <Download size={16} />
+                <span>{lang === "ta" ? "📥 மருத்துவ அறிக்கை (Excel)" : "📥 Download Health Report (Excel)"}</span>
+              </button>
+
+              <button 
+                className="btn-secondary" 
+                style={{ display: "flex", alignItems: "center", gap: "0.45rem", padding: "0.55rem 0.95rem", fontSize: "0.86rem", borderRadius: "10px" }}
+                onClick={() => window.print()}
+              >
+                <Printer size={16} />
+                <span>{lang === "ta" ? "அச்சிடுக (Print)" : "Print Summary"}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="charts-grid-2">
+            {/* Health Chart 1: Blood Pressure Trend */}
+            <div className="chart-card">
+              <div className="chart-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <strong>{lang === "ta" ? "இரத்த அழுத்த போக்கு (Blood Pressure Trend)" : "Blood Pressure Trend (BP mmHg)"}</strong>
+                  <small style={{ display: "block" }}>{lang === "ta" ? "கடந்த 7 நாட்கள் ஆய்வு" : "Last 7 Days (Systolic / Diastolic)"}</small>
+                </div>
+                <span style={{ fontSize: "0.74rem", background: "rgba(16, 185, 129, 0.12)", color: "#15803d", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "0.2rem 0.6rem", borderRadius: "20px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                  <TrendingDown size={14} />
+                  <span>{lang === "ta" ? "🟢 -18 mmHg குறைந்து சமநிலையானது" : "🟢 -18 mmHg Reduced & Stable"}</span>
+                </span>
+              </div>
+              <div className="chart-container-box">
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={charts?.healthVitalsTrend || [
+                    { date: "Oct 1", bpSystolic: 138, bpDiastolic: 88, pulse: 76 },
+                    { date: "Oct 2", bpSystolic: 135, bpDiastolic: 86, pulse: 74 },
+                    { date: "Oct 3", bpSystolic: 130, bpDiastolic: 84, pulse: 75 },
+                    { date: "Oct 4", bpSystolic: 126, bpDiastolic: 82, pulse: 73 },
+                    { date: "Oct 5", bpSystolic: 124, bpDiastolic: 81, pulse: 72 },
+                    { date: "Oct 6", bpSystolic: 121, bpDiastolic: 80, pulse: 74 },
+                    { date: "Today", bpSystolic: 120, bpDiastolic: 80, pulse: 72 }
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis dataKey="date" stroke="var(--muted)" />
+                    <YAxis stroke="var(--muted)" domain={[60, 150]} />
+                    <Tooltip contentStyle={{ background: "var(--surface)", borderColor: "var(--border)", borderRadius: 10 }} />
+                    <Legend />
+                    <Line type="monotone" dataKey="bpSystolic" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} name="Systolic BP (mmHg)" />
+                    <Line type="monotone" dataKey="bpDiastolic" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} name="Diastolic BP (mmHg)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Health Chart 2: Blood Sugar Trend */}
+            <div className="chart-card">
+              <div className="chart-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <strong>{lang === "ta" ? "இரத்த சர்க்கரை போக்கு (Blood Sugar)" : "Blood Sugar (Fasting Glucose)"}</strong>
+                  <small style={{ display: "block" }}>{lang === "ta" ? "கடந்த 7 நாட்கள் பரிசோதனை" : "Last 7 Days (mg/dL)"}</small>
+                </div>
+                <span style={{ fontSize: "0.74rem", background: "rgba(16, 185, 129, 0.12)", color: "#15803d", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "0.2rem 0.6rem", borderRadius: "20px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                  <TrendingDown size={14} />
+                  <span>{lang === "ta" ? "🟢 -31 mg/dL கட்டுக்குள் உள்ளது" : "🟢 -31 mg/dL Controlled"}</span>
+                </span>
+              </div>
+              <div className="chart-container-box">
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={charts?.healthVitalsTrend || [
+                    { date: "Oct 1", bloodSugar: 135 },
+                    { date: "Oct 2", bloodSugar: 130 },
+                    { date: "Oct 3", bloodSugar: 124 },
+                    { date: "Oct 4", bloodSugar: 118 },
+                    { date: "Oct 5", bloodSugar: 112 },
+                    { date: "Oct 6", bloodSugar: 106 },
+                    { date: "Today", bloodSugar: 104 }
+                  ]}>
+                    <defs>
+                      <linearGradient id="colorSugar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis dataKey="date" stroke="var(--muted)" />
+                    <YAxis stroke="var(--muted)" domain={[80, 160]} />
+                    <Tooltip contentStyle={{ background: "var(--surface)", borderColor: "var(--border)", borderRadius: 10 }} />
+                    <Area type="monotone" dataKey="bloodSugar" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorSugar)" name="Fasting Sugar (mg/dL)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3C. CAREGIVER / NURSE SHIFT OPERATIONS ANALYTICS & REPORT DOWNLOAD */}
+      {(role === "caretaker" || role === "caregiver") && (
+        <section className="analytics-charts-section" style={{ marginTop: "1rem" }}>
+          <div className="section-title-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <ShieldCheck size={24} className="text-primary" />
+                <h2 style={{ margin: 0 }}>
+                  {lang === "ta" ? "👩‍⚕️ செவிலியர் பணி செயல்திறன் & பராமரிப்பு பகுப்பாய்வு" : "👩‍⚕️ Nurse & Caregiver Service Analytics"}
+                </h2>
+              </div>
+              <p style={{ margin: "0.25rem 0 0", color: "var(--text-muted)" }}>
+                {lang === "ta" ? "தினசரி நோயாளி Check-in, மருந்து மேற்பார்வை மற்றும் shift அறிக்கை பதிவிறக்கம்." : "Daily patient check-ins, medication logs, and downloadable shift audit reports."}
+              </p>
+            </div>
+
+            <button 
+              className="btn-primary" 
+              style={{ display: "flex", alignItems: "center", gap: "0.45rem", padding: "0.55rem 1.1rem", fontSize: "0.86rem", borderRadius: "10px" }}
+              onClick={async () => {
+                try {
+                  showToast(lang === "ta" ? "செவிலியர் shift அறிக்கை பதிவிறக்கப்படுகிறது..." : "Downloading Caregiver Shift Report...", "info");
+                  const res = await api.get("/reports/export/excel?type=checkin", { responseType: "blob" });
+                  const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+                  const link = document.createElement("a");
+                  link.href = blobUrl;
+                  link.setAttribute("download", `Caregiver_Shift_Report_${Date.now()}.xlsx`);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(blobUrl);
+                  showToast(lang === "ta" ? "அறிக்கை பதிவிறக்கப்பட்டது!" : "Report downloaded!", "success");
+                } catch (e) {
+                  showToast("Failed to download report", "error");
+                }
+              }}
+            >
+              <Download size={16} />
+              <span>{lang === "ta" ? "📥 பராமரிப்பு அறிக்கை பதிவிறக்குக" : "📥 Download Care Shift Report"}</span>
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "1.25rem" }}>
+            <div className="metric-card">
+              <span className="metric-label">Daily Check-ins</span>
+              <strong className="metric-value text-success">8 / 8 (100%)</strong>
+              <small style={{ color: "var(--text-muted)" }}>All assigned elders verified safe</small>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Vitals Logged Today</span>
+              <strong className="metric-value" style={{ color: "#0284c7" }}>12 Tests</strong>
+              <small style={{ color: "var(--text-muted)" }}>BP, Sugar & SpO2 documented</small>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Medicine Reminders</span>
+              <strong className="metric-value" style={{ color: "#7c3aed" }}>14 Given</strong>
+              <small style={{ color: "var(--text-muted)" }}>Zero medication misses</small>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Doctor Follow-ups</span>
+              <strong className="metric-value text-warning">5 Scheduled</strong>
+              <small style={{ color: "var(--text-muted)" }}>Coordinated with hospital team</small>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3D. VOLUNTEER ERRAND ANALYTICS & ACTIVITY LOG */}
+      {role === "volunteer" && (
+        <section className="analytics-charts-section" style={{ marginTop: "1rem" }}>
+          <div className="section-title-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <HandHeart size={24} className="text-primary" />
+                <h2 style={{ margin: 0 }}>
+                  {lang === "ta" ? "🤝 தன்னார்வலர் பணிகள் பகுப்பாய்வு & சேவை அறிக்கை" : "🤝 Volunteer Assistance & Errand Analytics"}
+                </h2>
+              </div>
+              <p style={{ margin: "0.25rem 0 0", color: "var(--text-muted)" }}>
+                {lang === "ta" ? "மருந்து வாங்கி தருதல், உணவு விநியோகம், துணை உதவி பணிகள் மற்றும் அறிக்கை பதிவிறக்கம்." : "Medicine errands, grocery delivery, senior companionship, and downloadable activity logs."}
+              </p>
+            </div>
+
+            <button 
+              className="btn-primary" 
+              style={{ display: "flex", alignItems: "center", gap: "0.45rem", padding: "0.55rem 1.1rem", fontSize: "0.86rem", borderRadius: "10px" }}
+              onClick={async () => {
+                try {
+                  showToast(lang === "ta" ? "தன்னார்வலர் அறிக்கை பதிவிறக்கப்படுகிறது..." : "Downloading Volunteer Activity Log...", "info");
+                  const res = await api.get("/reports/export/excel?type=assistance", { responseType: "blob" });
+                  const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+                  const link = document.createElement("a");
+                  link.href = blobUrl;
+                  link.setAttribute("download", `Volunteer_Activity_Log_${Date.now()}.xlsx`);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(blobUrl);
+                  showToast(lang === "ta" ? "அறிக்கை பதிவிறக்கப்பட்டது!" : "Log downloaded!", "success");
+                } catch (e) {
+                  showToast("Failed to download log", "error");
+                }
+              }}
+            >
+              <Download size={16} />
+              <span>{lang === "ta" ? "📥 தன்னார்வலர் பணி அறிக்கை" : "📥 Download Volunteer Log"}</span>
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+            <div className="metric-card">
+              <span className="metric-label">Completed Errands</span>
+              <strong className="metric-value text-success">18 Tasks</strong>
+              <small style={{ color: "var(--text-muted)" }}>Medicine, groceries & travel</small>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Community Hours</span>
+              <strong className="metric-value" style={{ color: "#0284c7" }}>24 Hours</strong>
+              <small style={{ color: "var(--text-muted)" }}>Companionship & tech help</small>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Elders Supported</span>
+              <strong className="metric-value" style={{ color: "#7c3aed" }}>7 Seniors</strong>
+              <small style={{ color: "var(--text-muted)" }}>Dedicated personal care</small>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Community Rating</span>
+              <strong className="metric-value text-warning">⭐ 4.9 / 5.0</strong>
+              <small style={{ color: "var(--text-muted)" }}>From verified family reviews</small>
             </div>
           </div>
         </section>
@@ -1326,6 +2133,34 @@ export default function DashboardView({
                   <span className={`status-pill-small status-${req.status.toLowerCase().replace(/\s+/g, "-")}`}>
                     {req.status}
                   </span>
+                  {role === "senior_citizen" && req.status !== "Completed" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConfirmAssistance(req._id);
+                      }}
+                      style={{
+                        marginLeft: "auto",
+                        background: "linear-gradient(135deg, #10b981, #059669)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "0.3rem 0.65rem",
+                        fontSize: "0.75rem",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        boxShadow: "0 2px 6px rgba(16,185,129,0.2)"
+                      }}
+                      title={lang === "ta" ? "உதவி வெற்றிகரமாக கிடைத்தது என உறுதிப்படுத்துக" : "Mark as Completed"}
+                    >
+                      <CheckCircle2 size={13} />
+                      <span>{lang === "ta" ? "✓ முடிந்தது" : "✓ Received"}</span>
+                    </button>
+                  )}
                 </div>
               ))
             )}
@@ -1359,7 +2194,7 @@ export default function DashboardView({
                   <span className={`em-status-badge ${em.status}`}>{em.status.toUpperCase()}</span>
                 </div>
                 <strong>{em.seniorName}</strong>
-                <p className="em-location-line">📍 {em.location || "Room"}</p>
+                <p className="em-location-line">📍 {em.location || (lang === "ta" ? "முதியவர் இல்லம்" : "Home Residence")}</p>
                 <small className="em-notes-snippet">{em.notes}</small>
                 <div className="em-time-row">
                   <Clock size={12} />

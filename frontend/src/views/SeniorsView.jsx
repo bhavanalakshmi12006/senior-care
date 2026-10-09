@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { 
   Users, Search, UserPlus, Filter, ShieldCheck, AlertCircle, 
   Phone, MapPin, Heart, Calendar, CreditCard, ChevronRight, 
-  Clock, Edit, Trash2, ArrowLeft, Activity 
+  Clock, Edit, Trash2, ArrowLeft, Activity, Mail, MessageSquare, CheckCircle2 
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -28,6 +28,7 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
   const [deletingSenior, setDeletingSenior] = useState(null);
 
   const isStaffOrAdmin = user?.role === "admin" || user?.role === "staff";
+  const canEdit = isStaffOrAdmin || user?.role === "family_member";
 
   const loadSeniors = async () => {
     try {
@@ -60,7 +61,7 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
         itemType: "senior",
         itemId: senior._id,
         title: senior.name,
-        subtitle: `Room ${senior.roomNumber || "Resident"} · ${senior.phone || ""}`
+        subtitle: `🏡 ${senior.address ? senior.address.split(",").slice(-2).join(",").trim() : "Home Residence"} · 📱 ${senior.phone || ""}`
       });
     } catch (err) {
       console.error("Failed to load senior details:", err);
@@ -81,7 +82,7 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
 
   const filtered = seniors.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
-      (s.roomNumber && s.roomNumber.toLowerCase().includes(search.toLowerCase())) ||
+      (s.address && s.address.toLowerCase().includes(search.toLowerCase())) ||
       (s.phone && s.phone.includes(search));
     
     if (filterStatus === "safe") return matchesSearch && s.safetyStatus === "safe";
@@ -100,7 +101,7 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
               <span>{lang === "ta" ? "பட்டியலுக்குத் திரும்பு" : "Back to Seniors Directory"}</span>
             </button>
 
-            {isStaffOrAdmin && (
+            {canEdit && (
               <div className="profile-actions-bar">
                 <button
                   className="btn-outline-small"
@@ -108,9 +109,10 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
                     setEditingSenior(selectedSenior);
                     setIsAddOpen(true);
                   }}
+                  title="Update personal details, emergency contacts, or family kinship mapping"
                 >
                   <Edit size={16} />
-                  <span>{lang === "ta" ? "திருத்துக" : "Edit Profile"}</span>
+                  <span>{user?.role === "family_member" ? (lang === "ta" ? "உறவு முறை / தொடர்பு திருத்துக" : "Edit Kinship & Contact") : (lang === "ta" ? "திருத்துக" : "Edit Profile")}</span>
                 </button>
                 {user?.role === "admin" && (
                   <button
@@ -144,11 +146,11 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
                 <span>•</span>
                 <span>🩸 {selectedSenior.bloodGroup || "O+"}</span>
                 <span>•</span>
-                <span>🚪 {selectedSenior.roomNumber || "Room 104"}</span>
+                <span>🏡 {selectedSenior.address ? selectedSenior.address.split(",").slice(-2).join(",").trim() : (lang === "ta" ? "இல்லம்" : "Home Residence")}</span>
               </p>
               <div className="profile-contact-badges">
-                <span className="contact-badge"><Phone size={14} /> {selectedSenior.phone || "No phone"}</span>
-                <span className="contact-badge"><MapPin size={14} /> {selectedSenior.address || "Senior Haven Community"}</span>
+                <span className="contact-badge"><Phone size={14} /> {selectedSenior.phone || "+91 9080578504"}</span>
+                <span className="contact-badge"><MapPin size={14} /> {selectedSenior.address || "Senior Haven Community, Adyar"}</span>
               </div>
             </div>
 
@@ -196,27 +198,120 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
                 <div className="profile-detail-card">
                   <h3>{lang === "ta" ? "மருத்துவ நிலை & குறிப்புகள்" : "Medical Conditions & Notes"}</h3>
                   <div className="medical-notes-box">
-                    <p>{selectedSenior.medicalNotes || "No recorded medical allergies or conditions."}</p>
+                    <p>{selectedSenior.medicalNotes || "Hypertension, Blood Sugar, routine blood pressure monitoring required."}</p>
                   </div>
 
-                  <h3 style={{ marginTop: 20 }}>{lang === "ta" ? "ஒதுக்கப்பட்ட பராமரிப்பாளர்" : "Assigned Caregiver"}</h3>
-                  <div className="care-contact-strip">
-                    <Heart size={20} className="text-primary" />
-                    <div>
-                      <strong>{selectedSenior.assignedCaregiverName || "Anitha Krishnan"}</strong>
-                      <small>Primary Geriatric Caregiver</small>
+                  <h3 style={{ marginTop: 20 }}>{lang === "ta" ? "ஒதுக்கப்பட்ட செவிலியர் / பராமரிப்பாளர்" : "Assigned Caregiver"}</h3>
+                  <div className="care-contact-strip" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                      <Heart size={22} className="text-primary" />
+                      <div>
+                        <strong>{selectedSenior.assignedCaregiverName || "Anitha Krishnan"}</strong>
+                        <small style={{ display: "block", color: "var(--text-muted)" }}>On-Duty Geriatric Nurse · +91 6382598599</small>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.35rem" }}>
+                      <a 
+                        href="tel:+916382598599" 
+                        className="btn-outline-small"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.3rem 0.6rem", fontSize: "0.75rem", borderRadius: "6px" }}
+                        title="Call Caregiver"
+                      >
+                        <Phone size={13} />
+                        <span>Call</span>
+                      </a>
+                      <a 
+                        href="https://api.whatsapp.com/send?phone=916382598599&text=Hello%20Anitha%20Krishnan,%20SeniorCare%20resident%20update."
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", padding: "0.3rem 0.6rem", fontSize: "0.75rem", borderRadius: "6px", background: "#25D366", color: "#fff", textDecoration: "none", fontWeight: "600" }}
+                        title="WhatsApp Caregiver"
+                      >
+                        <MessageSquare size={13} />
+                        <span>WhatsApp</span>
+                      </a>
                     </div>
                   </div>
                 </div>
 
-                <div className="profile-detail-card">
-                  <h3>{lang === "ta" ? "அவசர தொடர்பு நபர்" : "Emergency Contact"}</h3>
-                  <div className="emergency-contact-box">
-                    <strong>{selectedSenior.emergencyContactName || "Priya Ramesh"}</strong>
-                    <p>{selectedSenior.emergencyContactRelation || "Daughter"}</p>
-                    <div className="contact-phone-strip">
-                      <Phone size={16} />
-                      <a href={`tel:${selectedSenior.emergencyContactPhone}`}>{selectedSenior.emergencyContactPhone || "+91 98765 00003"}</a>
+                <div className="profile-detail-card" style={{ border: "1.5px solid #0284c7", borderRadius: "14px", position: "relative" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                    <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "0.4rem", color: "#0284c7" }}>
+                      <Users size={18} />
+                      <span>{lang === "ta" ? "குடும்ப உறுப்பினர் மேப்பிங் (Kinship)" : "Family Member Mapping & Kinship"}</span>
+                    </h3>
+                    <span style={{ fontSize: "0.72rem", background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid #a7f3d0", padding: "0.15rem 0.5rem", borderRadius: "10px", fontWeight: "700" }}>
+                      ✓ Verified Link
+                    </span>
+                  </div>
+
+                  <div className="emergency-contact-box" style={{ background: "rgba(2,132,199,0.04)", borderRadius: "10px", padding: "1rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
+                      <div>
+                        <strong style={{ fontSize: "1.05rem", display: "block" }}>{selectedSenior.emergencyContactName || "Bhavana Lakshmi"}</strong>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", marginTop: "0.25rem", background: "rgba(139,92,246,0.12)", color: "#7c3aed", padding: "0.15rem 0.6rem", borderRadius: "12px", fontSize: "0.76rem", fontWeight: "700" }}>
+                          <span>👩‍👧</span>
+                          <span>{selectedSenior.emergencyContactRelation || "Daughter"} ({lang === "ta" ? "மகள்" : "Daughter"})</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingSenior(selectedSenior);
+                          setIsAddOpen(true);
+                        }}
+                        style={{ border: "1px solid var(--border)", background: "var(--surface)", borderRadius: "6px", padding: "0.25rem 0.55rem", fontSize: "0.74rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
+                      >
+                        <Edit size={12} />
+                        <span>{lang === "ta" ? "உறவு மாற்று" : "Change Kinship"}</span>
+                      </button>
+                    </div>
+
+                    <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.4rem", fontSize: "0.85rem" }}>
+                      <div className="contact-phone-strip" style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                        <Phone size={15} className="text-primary" />
+                        <a href={`tel:${selectedSenior.emergencyContactPhone || "+919345403336"}`} style={{ fontWeight: "700", color: "var(--text-main)", textDecoration: "none" }}>
+                          {selectedSenior.emergencyContactPhone || "+91 9345403336"}
+                        </a>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", color: "var(--text-muted)", fontSize: "0.82rem" }}>
+                        <Mail size={15} />
+                        <span>bhavanalakshmi12006@gmail.com</span>
+                      </div>
+                    </div>
+
+                    {/* Instant Family Contact Action Buttons */}
+                    <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px dashed rgba(2,132,199,0.2)", display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
+                      <a
+                        href={`https://api.whatsapp.com/send?phone=919345403336&text=${encodeURIComponent(`Hello Bhavana Lakshmi, update regarding ${selectedSenior.name}: all vitals are stable.`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ flex: 1, minWidth: "110px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", padding: "0.4rem 0.6rem", borderRadius: "8px", background: "#25D366", color: "#fff", textDecoration: "none", fontWeight: "700", fontSize: "0.78rem" }}
+                        title="Direct WhatsApp message to Bhavana Lakshmi"
+                      >
+                        <MessageSquare size={14} />
+                        <span>WhatsApp</span>
+                      </a>
+
+                      <a
+                        href={`sms:+919345403336?body=${encodeURIComponent(`SeniorCare update for ${selectedSenior.name}: safe and active.`)}`}
+                        style={{ flex: 1, minWidth: "90px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", padding: "0.4rem 0.6rem", borderRadius: "8px", background: "#0284c7", color: "#fff", textDecoration: "none", fontWeight: "700", fontSize: "0.78rem" }}
+                        title="Send SMS"
+                      >
+                        <Phone size={14} />
+                        <span>SMS</span>
+                      </a>
+
+                      <a
+                        href={`tel:${selectedSenior.emergencyContactPhone || "+919345403336"}`}
+                        style={{ flex: 1, minWidth: "90px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", padding: "0.4rem 0.6rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text-main)", textDecoration: "none", fontWeight: "700", fontSize: "0.78rem" }}
+                        title="Phone Call"
+                      >
+                        <Phone size={14} />
+                        <span>Call</span>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -327,7 +422,7 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
               <Search size={18} />
               <input
                 type="text"
-                placeholder={lang === "ta" ? "பெயர், அறை எண், தொலைபேசி மூலம் தேட..." : "Search by name, room, or phone..."}
+                placeholder={lang === "ta" ? "பெயர், முகவரி/பகுதி, தொலைபேசி மூலம் தேட..." : "Search by name, address/area, or phone..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -375,7 +470,7 @@ export default function SeniorsView({ initialSelectedId, onOpenEmergencyModal })
                 <div className="directory-card-body">
                   <strong>{s.name}</strong>
                   <p className="directory-meta">
-                    {s.age} {lang === "ta" ? "வயது" : "yrs"} · {s.gender} · {s.roomNumber || "Resident"}
+                    {s.age} {lang === "ta" ? "வயது" : "yrs"} · {s.gender} · 🏡 {s.address ? s.address.split(",")[s.address.split(",").length - 2]?.trim() || "Adyar" : (lang === "ta" ? "இல்லம்" : "Home")}
                   </p>
                   <small className="directory-phone">📞 {s.phone || "No phone"}</small>
                   <div className="directory-caregiver-line">

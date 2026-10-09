@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { 
   ShieldAlert, AlertOctagon, CheckCircle2, PhoneCall, 
-  ArrowUpRight, Clock, MapPin, User, ChevronRight, Check 
+  ArrowUpRight, Clock, MapPin, User, ChevronRight, Check, MessageSquare 
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { useToast } from "../context/ToastContext";
 import api from "../api";
+import EmergencyMessageModal from "../components/Modals/EmergencyMessageModal";
 
 export default function EmergenciesView({ onOpenEmergencyModal }) {
   const { user, t, lang } = useAuth();
@@ -15,6 +16,7 @@ export default function EmergenciesView({ onOpenEmergencyModal }) {
 
   const [emergencies, setEmergencies] = useState([]);
   const [selectedEmergency, setSelectedEmergency] = useState(null);
+  const [messageEmergency, setMessageEmergency] = useState(null);
   const [actionNote, setActionNote] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -96,7 +98,7 @@ export default function EmergenciesView({ onOpenEmergencyModal }) {
                     <span className={`status-pill status-${em.status}`}>{em.status.toUpperCase()}</span>
                   </div>
                   <strong>{em.seniorName}</strong>
-                  <p className="ticket-loc"><MapPin size={13} /> {em.location || "Room"}</p>
+                  <p className="ticket-loc"><MapPin size={13} /> {em.location || (lang === "ta" ? "இல்லம்" : "Home Residence")}</p>
                   <small className="ticket-time"><Clock size={12} /> {new Date(em.createdAt).toLocaleString()}</small>
                 </div>
               ))
@@ -142,7 +144,7 @@ export default function EmergenciesView({ onOpenEmergencyModal }) {
               <div className="em-detail-grid">
                 <div className="em-stat-box">
                   <small>{t.location}</small>
-                  <strong>{selectedEmergency.location || "Resident Room"}</strong>
+                  <strong>{selectedEmergency.location || (lang === "ta" ? "முதியவர் இல்லம்" : "Home Residence")}</strong>
                 </div>
                 <div className="em-stat-box">
                   <small>{t.severity}</small>
@@ -204,10 +206,21 @@ export default function EmergenciesView({ onOpenEmergencyModal }) {
                 <div className="em-action-controls">
                   <h4>{lang === "ta" ? "அவசர மேலாண்மை செயல்கள்" : "Emergency Response Actions"}</h4>
                   <div className="em-buttons-row">
-                    <a href="tel:+919876500004" className="btn-action call">
+                    <a href="tel:+916382598599" className="btn-action call">
                       <PhoneCall size={18} />
-                      <span>{t.callCaregiver}</span>
+                      <span>{t.callCaregiver} (+91 6382598599)</span>
                     </a>
+
+                    <button 
+                      type="button"
+                      className="btn-action" 
+                      style={{ background: "#25D366", color: "#fff", borderColor: "#16a34a", fontWeight: "700" }}
+                      onClick={() => setMessageEmergency(selectedEmergency)}
+                      title="Send WhatsApp, SMS, or Email message to Caretaker, Volunteer, or Family"
+                    >
+                      <MessageSquare size={18} />
+                      <span>{lang === "ta" ? "அவசர செய்தி அனுப்பு (WhatsApp/SMS)" : "Send Alert (WhatsApp/SMS)"}</span>
+                    </button>
 
                     {selectedEmergency.status === "active" && (
                       <button className="btn-action ack" onClick={() => handleUpdateStatus("acknowledged")}>
@@ -228,6 +241,19 @@ export default function EmergenciesView({ onOpenEmergencyModal }) {
                       <span>{t.resolve}</span>
                     </button>
                   </div>
+                </div>
+              )}
+
+              {selectedEmergency.status === "resolved" && (
+                <div style={{ marginTop: "1rem" }}>
+                  <button 
+                    type="button"
+                    style={{ background: "rgba(37,211,102,0.12)", color: "#166534", border: "1px solid #22c55e", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 1rem", borderRadius: "8px", cursor: "pointer" }}
+                    onClick={() => setMessageEmergency(selectedEmergency)}
+                  >
+                    <MessageSquare size={16} />
+                    <span>{lang === "ta" ? "அவசர விவரங்களை மீண்டும் அனுப்பு (WhatsApp/SMS)" : "Share/Send Alert Details (WhatsApp/SMS)"}</span>
+                  </button>
                 </div>
               )}
 
@@ -252,6 +278,19 @@ export default function EmergenciesView({ onOpenEmergencyModal }) {
           )}
         </div>
       </div>
+
+      {/* Emergency Message Modal */}
+      {messageEmergency && (
+        <EmergencyMessageModal
+          isOpen={!!messageEmergency}
+          emergency={messageEmergency}
+          onClose={() => {
+            setMessageEmergency(null);
+            loadEmergencies();
+          }}
+        />
+      )}
     </div>
   );
 }
+

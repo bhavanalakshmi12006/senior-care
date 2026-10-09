@@ -15,7 +15,7 @@ export async function globalSearch(req, res) {
     const regex = new RegExp(query, "i");
 
     const [seniors, appointments, emergencies, assistance] = await Promise.all([
-      Senior.find({ $or: [{ name: regex }, { phone: regex }, { roomNumber: regex }] }).limit(5),
+      Senior.find({ $or: [{ name: regex }, { phone: regex }, { address: regex }] }).limit(5),
       Appointment.find({ $or: [{ appointmentCode: regex }, { doctorName: regex }, { seniorName: regex }] }).limit(5),
       Emergency.find({ $or: [{ emergencyCode: regex }, { seniorName: regex }, { notes: regex }] }).limit(5),
       AssistanceRequest.find({ $or: [{ title: regex }, { category: regex }, { seniorName: regex }] }).limit(5)

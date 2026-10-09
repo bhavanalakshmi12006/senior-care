@@ -46,17 +46,17 @@ export default function CareGallery() {
       caption: lang === "ta" ? "அர்ப்பணிப்புள்ள செவிலியர் அனிதா ரத்த அழுத்தம், நாடித்துடிப்பு மற்றும் நலம் விசாரிக்கும் தருணம்." : "Nurse Anitha conducting gentle routine blood pressure check and daily wellness evaluation with genuine warmth.",
       img: "/assets/caregiver-senior.jpg",
       date: "05 Oct 2026",
-      location: "Room 104 Care Suite"
+      location: "Home Residence · Adyar, Chennai"
     },
     {
       id: "living",
       category: "wellness",
-      tag: lang === "ta" ? "அமைதியான இல்லம்" : "Assisted Living",
-      title: lang === "ta" ? "பாதுகாப்பான & வசதியான இல்ல வளாகம்" : "Safe & Barrier-Free Living Spaces",
-      caption: lang === "ta" ? "முதியோர்களுக்கான சறுக்காத தரை, கைப்பிடிகள் மற்றும் இயற்கை வெளிச்சம் கொண்ட நவீன அறைகள்." : "Thoughtfully designed senior-friendly residences with non-slip flooring, support rails, and abundant natural light.",
+      tag: lang === "ta" ? "அமைதியான இல்லம்" : "Home Living",
+      title: lang === "ta" ? "பாதுகாப்பான & வசதியான தனி இல்லம்" : "Safe & Comfortable Home Living",
+      caption: lang === "ta" ? "முதியோர்கள் தங்கள் சொந்த வீட்டில் சறுக்காத தரை, கைப்பிடிகள் மற்றும் இயற்கை வெளிச்சத்துடன் சுதந்திரமாக வாழும் சூழல்." : "Thoughtfully supported independent home residence with non-slip flooring, support rails, and volunteer care.",
       img: "/assets/care-at-home.png",
       date: "28 Sep 2026",
-      location: "Senior Haven Facility"
+      location: "Independent Home Living, Chennai"
     },
     {
       id: "health",

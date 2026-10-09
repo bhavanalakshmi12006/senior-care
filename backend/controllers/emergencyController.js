@@ -168,3 +168,75 @@ export async function updateEmergencyStatus(req, res) {
     res.status(500).json({ message: "Failed to update emergency", error: err.message });
   }
 }
+
+export async function sendEmergencyMessage(req, res) {
+  try {
+    const { id } = req.params;
+    const {
+      recipientRole = "all", // "caretaker" | "volunteer" | "family_member" | "all"
+      recipientName,
+      recipientPhone,
+      recipientEmail,
+      channels = ["whatsapp", "sms", "email"],
+      customMessage
+    } = req.body;
+
+    const emergency = await Emergency.findById(id);
+    if (!emergency) return res.status(404).json({ message: "Emergency record not found" });
+
+    const senior = await Senior.findById(emergency.seniorId);
+
+    const title = `🚨 Emergency Alert: ${emergency.seniorName} (${emergency.emergencyCode})`;
+    const defaultMsg = `Urgent alert: ${emergency.emergencyCode} is active at ${emergency.location}. Resident ${emergency.seniorName} requires immediate assistance. Note: ${emergency.notes || "SOS triggered"}`;
+    const messageToSend = customMessage || defaultMsg;
+
+    await dispatchNotification({
+      recipientUserId: null,
+      recipientRole: recipientRole === "all" ? "caretaker" : recipientRole,
+      seniorId: emergency.seniorId,
+      type: "emergency",
+      title,
+      message: messageToSend,
+      priority: "critical",
+      link: "/emergency",
+      channels,
+      recipientPhone: recipientPhone || (senior ? senior.emergencyContactPhone : null),
+      recipientEmail: recipientEmail || "family@seniorcare.local"
+    });
+
+    const actorName = req.user?.displayName || req.user?.firstName || "Care Dispatcher";
+    const actorId = req.user?._id || emergency.triggeredBy;
+    const actorRole = req.user?.role || emergency.triggeredRole || "caretaker";
+
+    emergency.actionsTaken.push({
+      note: `Alert message sent to ${recipientName || recipientRole} via ${channels.join(", ")} by ${actorName}`,
+      actionTime: new Date(),
+      by: actorName
+    });
+    await emergency.save();
+
+    await AuditLog.create({
+      action: "EMERGENCY_MESSAGE_SENT",
+      performedBy: actorId,
+      performedByName: actorName,
+      performedByRole: actorRole,
+      targetEntity: "Emergency",
+      targetId: emergency.emergencyCode,
+      details: `Alert message sent to ${recipientName || recipientRole} (${recipientPhone || ""}) via ${channels.join(", ")}`
+    });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("emergency-status-changed", { emergency });
+      io.emit("notification-created", { type: "emergency" });
+    }
+
+    res.json({
+      message: `Emergency alert successfully dispatched to ${recipientName || recipientRole}`,
+      emergency
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send emergency message", error: err.message });
+  }
+}
+

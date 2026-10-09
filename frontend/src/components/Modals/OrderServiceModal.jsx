@@ -31,7 +31,7 @@ export default function OrderServiceModal({
   const [loading, setLoading] = useState(false);
 
   // Recipient Contact Details for Live Dispatch
-  const [recipientPhone, setRecipientPhone] = useState("+91 98765 00003");
+  const [recipientPhone, setRecipientPhone] = useState("+91 9080578504");
   const [recipientEmail, setRecipientEmail] = useState(user?.email || "family@seniorcare.local");
 
   // Channels selection (WhatsApp, SMS, Email)
@@ -52,7 +52,7 @@ export default function OrderServiceModal({
           setLocalSeniors(list);
           if (list.length > 0 && !selectedSeniorId) {
             setSelectedSeniorId(list[0]._id);
-            setRecipientPhone(list[0].emergencyContactPhone || list[0].phone || "+91 98765 00003");
+            setRecipientPhone(list[0].emergencyContactPhone || list[0].phone || "+91 9080578504");
           }
         })
         .catch(() => {});
@@ -73,7 +73,7 @@ export default function OrderServiceModal({
     if (selectedSeniorId && effectiveSeniors.length > 0) {
       const snr = effectiveSeniors.find((s) => s._id === selectedSeniorId);
       if (snr) {
-        setRecipientPhone(snr.emergencyContactPhone || snr.phone || "+91 98765 00003");
+        setRecipientPhone(snr.emergencyContactPhone || snr.phone || "+91 9080578504");
       }
     }
   }, [selectedSeniorId, effectiveSeniors]);
@@ -164,7 +164,7 @@ export default function OrderServiceModal({
 
   // Generate Action Links
   const getWhatsAppLink = (data) => {
-    const cleanPhone = (data.phone || "919876500003").replace(/[^0-9]/g, "");
+    const cleanPhone = (data.phone || "919080578504").replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
       `🏥 *SeniorCare Lab Booking Confirmation*\n\n` +
       `Resident: *${data.seniorName}*\n` +
@@ -177,7 +177,7 @@ export default function OrderServiceModal({
   };
 
   const getSmsLink = (data) => {
-    const cleanPhone = (data.phone || "+919876500003").replace(/[^0-9+]/g, "");
+    const cleanPhone = (data.phone || "+919080578504").replace(/[^0-9+]/g, "");
     const body = encodeURIComponent(
       `SeniorCare Alert: Lab service '${data.serviceName}' booked for ${data.seniorName} on ${data.date} ${data.time}. Contact support for queries.`
     );
@@ -417,7 +417,7 @@ export default function OrderServiceModal({
               <select value={selectedSeniorId} onChange={(e) => setSelectedSeniorId(e.target.value)} style={inputStyle}>
                 {effectiveSeniors.map((s) => (
                   <option key={s._id} value={s._id}>
-                    {s.name} ({s.age} yrs · {s.roomNumber || s.address || "Resident"})
+                    {s.name} ({s.age} yrs · 🏡 {s.address ? s.address.split(",").slice(-2).join(",").trim() : "Home Residence"})
                   </option>
                 ))}
               </select>

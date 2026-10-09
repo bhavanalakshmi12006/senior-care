@@ -1,69 +1,122 @@
 ========================================================================
-  SENIORCARE (SCS) — TEST LOGIN CREDENTIALS
+  SENIORCARE (SCS) — TEST LOGIN CREDENTIALS & MULTI-MEMBER MAPPINGS
 ========================================================================
 
-Common Password for all demo accounts:
+Common Password for ALL demo accounts:
 SeniorCare@2026!
 
-------------------------------------------------------------------------
-1. System Administrator
-------------------------------------------------------------------------
-Role: admin
-Email: admin.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Full system dashboard, Recharts operations analytics, user management, audit logs, reports export & import.
+========================================================================
+GROUP A: SENIOR 1 — KALYANI AMMAL (Age 72, Female, Adyar Villa)
+========================================================================
+1. Senior Citizen Account:
+   • Role: senior_citizen
+   • Email: senior.test@seniorcare.local
+   • Features: Big accessible UI, "✓ I AM SAFE" Check-in, Emergency SOS,
+               "✓ உதவி முடிந்தது / Confirm Completed" button for active assistance requests.
 
-------------------------------------------------------------------------
-2. Care Staff
-------------------------------------------------------------------------
-Role: staff
-Email: staff.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Senior resident registry, appointment scheduling, fee recording, check-in compliance monitoring, reports.
+2. Family Member 1 (Daughter):
+   • Role: family_member
+   • Email: bhavanalakshmi12006@gmail.com (or family.test@seniorcare.local)
+   • Linked Elder: Kalyani Ammal ONLY (Strictly isolated)
+   • Features: Health trends, WhatsApp/SMS/Email vitals share, Lab orders.
 
-------------------------------------------------------------------------
-3. Senior Citizen
-------------------------------------------------------------------------
-Role: senior_citizen
-Email: senior.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Large accessible UI, "✓ I AM SAFE" check-in button, "🚨 EMERGENCY" quick trigger, My Caregiver card with direct call, My Appointments, My Fees, My Family.
+3. Family Member 2 (Elder Son):
+   • Role: family_member
+   • Email: arun.kumar@seniorcare.local
+   • Linked Elder: Kalyani Ammal ONLY (Strictly isolated)
 
-------------------------------------------------------------------------
-------------------------------------------------------------------------
-4. Family Member 1 (Daughter: Priya Ramesh)
-------------------------------------------------------------------------
-Role: family_member
-Email: family.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Linked to Senior Citizen (Lakshmi Devi), real-time safety status, live emergency alerts, call caregiver, order lab tests/hospital services.
-
-------------------------------------------------------------------------
-5. Family Member 2 (Son: Vignesh Ramesh - Second Child)
-------------------------------------------------------------------------
-Role: family_member
-Email: family2.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Demonstrates multi-child family access! Also linked to Senior Citizen (Lakshmi Devi). Can switch between family elders, monitor wellness, and order healthcare services.
-
-------------------------------------------------------------------------
-6. Primary Caregiver / Caretaker
-------------------------------------------------------------------------
-Role: caretaker / caregiver
-Email: caretaker.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Assigned seniors monitoring, missed check-ins queue, active emergency response panel (Acknowledge, Escalate, Resolve), care notes.
-
-------------------------------------------------------------------------
-7. Care Volunteer
-------------------------------------------------------------------------
-Role: volunteer
-Email: volunteer.test@seniorcare.local
-Password: SeniorCare@2026!
-Features: Available assistance requests board (Medicine Pickup, Food Delivery, Grocery Shopping, Hospital Escort), Accept Task, Mark Completed.
+4. Family Member 3 (Younger Daughter):
+   • Role: family_member
+   • Email: pooja.lakshmi@seniorcare.local
+   • Linked Elder: Kalyani Ammal ONLY (Strictly isolated)
 
 ========================================================================
-  HOW TO LOGIN FOR YOUR PRESENTATION:
-  Enter the Email and Password above into the Sign In form.
-  You can also use "Continue with Google" for any role!
+GROUP B: SENIOR 5 — DR. K. S. RAMANATHAN (Age 76, Male, Adyar Villa 12)
+========================================================================
+1. Senior Citizen Account:
+   • Role: senior_citizen
+   • Email: senior5.test@seniorcare.local
+   • Features: Big accessible UI, "✓ I AM SAFE" Check-in, Emergency SOS,
+               "✓ உதவி முடிந்தது / Confirm Completed" button for active assistance requests.
+
+2. Family Member 1 (Son - Cardiologist):
+   • Role: family_member
+   • Email: karthik.ramanathan@seniorcare.local (or family5.test@seniorcare.local)
+   • Linked Elder: Dr. K. S. Ramanathan ONLY (Strictly isolated)
+
+3. Family Member 2 (Daughter - Architect):
+   • Role: family_member
+   • Email: priya.ramanathan@seniorcare.local
+   • Linked Elder: Dr. K. S. Ramanathan ONLY (Strictly isolated)
+
+4. Family Member 3 (Son - AI Research Engineer):
+   • Role: family_member
+   • Email: ashwin.ramanathan@seniorcare.local
+   • Linked Elder: Dr. K. S. Ramanathan ONLY (Strictly isolated)
+
+========================================================================
+GROUP C: SENIOR 6 — RAJALAKSHMI NARAYANAN (Age 74, Female, Mandaveli Suite 104)
+========================================================================
+1. Senior Citizen Account:
+   • Role: senior_citizen
+   • Email: senior6.test@seniorcare.local
+   • Features: Big accessible UI, "✓ I AM SAFE" Check-in, Emergency SOS,
+               "✓ உதவி முடிந்தது / Confirm Completed" button for active assistance requests.
+
+2. Family Member 1 (Elder Daughter - School Principal):
+   • Role: family_member
+   • Email: deepa.narayanan@seniorcare.local (or family6.test@seniorcare.local)
+   • Linked Elder: Rajalakshmi Narayanan ONLY (Strictly isolated)
+
+3. Family Member 2 (Son - Financial Analyst):
+   • Role: family_member
+   • Email: vijay.narayanan@seniorcare.local
+   • Linked Elder: Rajalakshmi Narayanan ONLY (Strictly isolated)
+
+4. Family Member 3 (Younger Daughter - UI/UX Designer):
+   • Role: family_member
+   • Email: swetha.narayanan@seniorcare.local
+   • Linked Elder: Rajalakshmi Narayanan ONLY (Strictly isolated)
+
+========================================================================
+GROUP D: CARE TEAM & OPERATIONAL STAFF
+========================================================================
+1. System Administrator:
+   • Role: admin
+   • Email: admin.test@seniorcare.local
+   • Features: Operations analytics, Recharts, staff management, audit logs, Excel export/import.
+
+2. Care Staff / Desk Coordinator:
+   • Role: staff
+   • Email: staff.test@seniorcare.local
+   • Features: Resident registry, doctor appointment scheduling, fee billing, check-in compliance.
+
+3. Geriatric Nurse / Caregiver:
+   • Role: caregiver / caretaker
+   • Email: caretaker.test@seniorcare.local
+   • Features: Assigned seniors monitoring, emergency acknowledge/escalate/resolve, clinical notes.
+
+4. Community Care Volunteer:
+   • Role: volunteer
+   • Email: volunteer.test@seniorcare.local
+   • Features: Errand assistance board (medicine pickup, grocery delivery), Accept Task, Start Progress.
+
+========================================================================
+HOW TO TEST THE ASSISTANCE COMPLETION FLOW:
+========================================================================
+1. Log in as Community Care Volunteer (`volunteer.test@seniorcare.local`).
+2. Go to Assistance Requests and pick or create a request (e.g. Medicine pickup).
+3. Click "Accept Task" -> "Start Progress".
+4. Log out, then log in as the mapped Senior Citizen (e.g., `senior5.test@seniorcare.local` for Dr. Ramanathan, or `senior.test@seniorcare.local` for Kalyani Ammal).
+5. On the Senior Dashboard or Assistance page, view the active errand request.
+6. Click "✓ Confirm Completed (Task Done)" / "✓ உதவி முடிந்தது / பெற்றுக்கொண்டேன்".
+7. The status instantly changes to "Completed" and logs an immutable audit trail!
+
+========================================================================
+HOW TO TEST EMAIL-BASED ISOLATION (ZERO DATA LEAKAGE):
+========================================================================
+• Login with `bhavanalakshmi12006@gmail.com` -> Displays ONLY Kalyani Ammal.
+• Login with `karthik.ramanathan@seniorcare.local` -> Displays ONLY Dr. K. S. Ramanathan.
+• Login with `deepa.narayanan@seniorcare.local` -> Displays ONLY Rajalakshmi Narayanan.
+• No other seniors will appear in the dashboard, appointments, fees, or reports!
 ========================================================================

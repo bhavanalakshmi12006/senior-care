@@ -139,40 +139,71 @@ export default function AssistanceView({ onOpenAssistanceModal }) {
                 </div>
               </div>
 
-              {/* Action buttons for Volunteers / Caregivers */}
-              <div className="assist-card-footer">
-                {req.status === "Requested" && (
-                  <button
-                    className="btn-accept-task"
-                    onClick={() => handleUpdateStatus(req._id, "Accepted")}
-                  >
-                    <span>{t.acceptTask}</span>
-                  </button>
-                )}
-
-                {req.status === "Accepted" && (
-                  <button
-                    className="btn-inprogress-task"
-                    onClick={() => handleUpdateStatus(req._id, "In Progress")}
-                  >
-                    <span>{lang === "ta" ? "தொடங்கப்பட்டது" : "Start Progress"}</span>
-                  </button>
-                )}
-
-                {req.status === "In Progress" && (
+              {/* Action buttons based on Role */}
+              <div className="assist-card-footer" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                {/* 1. Senior Citizen Confirmation Button (As requested: Senior Citizen marks it as Completed) */}
+                {user?.role === "senior_citizen" && req.status !== "Completed" && (
                   <button
                     className="btn-complete-task"
+                    style={{
+                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      color: "#fff",
+                      border: "none",
+                      fontWeight: "700",
+                      padding: "0.5rem 0.9rem",
+                      borderRadius: "8px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      boxShadow: "0 2px 8px rgba(16,185,129,0.25)"
+                    }}
                     onClick={() => handleUpdateStatus(req._id, "Completed")}
+                    title={lang === "ta" ? "உதவி வெற்றிகரமாக கிடைத்தது என உறுதிப்படுத்துக" : "Confirm assistance received and mark as completed"}
                   >
                     <CheckCircle2 size={16} />
-                    <span>{t.markCompleted}</span>
+                    <span>{lang === "ta" ? "✓ உதவி முடிந்தது / பெற்றுக்கொண்டேன் (Mark Completed)" : "✓ Confirm Completed (Task Done)"}</span>
                   </button>
+                )}
+
+                {/* 2. Volunteers / Caregivers Action Flow */}
+                {(user?.role === "volunteer" || user?.role === "caregiver" || user?.role === "caretaker" || user?.role === "admin" || user?.role === "staff") && (
+                  <>
+                    {req.status === "Requested" && (
+                      <button
+                        className="btn-accept-task"
+                        onClick={() => handleUpdateStatus(req._id, "Accepted")}
+                      >
+                        <span>{t.acceptTask}</span>
+                      </button>
+                    )}
+
+                    {req.status === "Accepted" && (
+                      <button
+                        className="btn-inprogress-task"
+                        onClick={() => handleUpdateStatus(req._id, "In Progress")}
+                      >
+                        <span>{lang === "ta" ? "தொடங்கப்பட்டது" : "Start Progress"}</span>
+                      </button>
+                    )}
+
+                    {req.status === "In Progress" && user?.role !== "senior_citizen" && (
+                      <button
+                        className="btn-complete-task"
+                        onClick={() => handleUpdateStatus(req._id, "Completed")}
+                      >
+                        <CheckCircle2 size={16} />
+                        <span>{t.markCompleted}</span>
+                      </button>
+                    )}
+                  </>
                 )}
 
                 {req.status === "Completed" && (
-                  <div className="task-done-badge">
+                  <div className="task-done-badge" style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "#059669", fontWeight: "700" }}>
                     <CheckCircle2 size={16} className="text-success" />
-                    <span>{t.completed}</span>
+                    <span>{lang === "ta" ? "✓ உதவி நிறைவடைந்தது (Completed)" : "✓ Completed"}</span>
                   </div>
                 )}
               </div>

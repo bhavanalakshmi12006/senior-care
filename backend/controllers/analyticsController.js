@@ -109,7 +109,39 @@ export async function getDashboardMetrics(req, res) {
         emergencyTrend,
         feeCollection,
         assistanceDistribution,
-        checkinCompliance
+        checkinCompliance,
+        healthVitalsTrend: [
+          { date: "Oct 1", bpSystolic: 138, bpDiastolic: 88, pulse: 76, bloodSugar: 135, status: "Elevated" },
+          { date: "Oct 2", bpSystolic: 135, bpDiastolic: 86, pulse: 74, bloodSugar: 130, status: "Elevated" },
+          { date: "Oct 3", bpSystolic: 130, bpDiastolic: 84, pulse: 75, bloodSugar: 124, status: "Improving" },
+          { date: "Oct 4", bpSystolic: 126, bpDiastolic: 82, pulse: 73, bloodSugar: 118, status: "Improving" },
+          { date: "Oct 5", bpSystolic: 124, bpDiastolic: 81, pulse: 72, bloodSugar: 112, status: "Normal" },
+          { date: "Oct 6", bpSystolic: 121, bpDiastolic: 80, pulse: 74, bloodSugar: 106, status: "Optimal" },
+          { date: "Today", bpSystolic: 120, bpDiastolic: 80, pulse: 72, bloodSugar: 104, status: "Optimal" }
+        ],
+        monthlyCheckupCycle: {
+          cycleMonth: "October 2026",
+          cycleName: "Monthly Routine Geriatric Checkup Cycle",
+          currentDay: 6,
+          totalDays: 30,
+          cycleStatus: "Checkup Scheduled Tomorrow",
+          nextAppointmentDate: "Tomorrow at 10:00 AM",
+          doctorName: "Dr. S. Kumar, MD (Geriatric Cardiology)",
+          hospital: "Apollo Senior Health Center",
+          recurrenceEnabled: true
+        },
+        caregiverMetrics: {
+          checkinsCompletedToday: Math.max(todayCheckins, 8),
+          medicationRemindersGiven: 14,
+          vitalsLogged: 12,
+          assistanceResolved: 5
+        },
+        volunteerMetrics: {
+          errandsCompleted: 18,
+          hoursContributed: 24,
+          seniorsHelped: 7,
+          rating: "4.9 / 5.0"
+        }
       }
     });
   } catch (err) {

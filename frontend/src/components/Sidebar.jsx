@@ -23,10 +23,10 @@ export default function Sidebar({
   // Role-based visibility
   const navItems = [
     { id: "dashboard", label: t.dashboard, icon: LayoutDashboard, roles: ["admin", "staff", "senior_citizen", "family_member", "caretaker", "caregiver", "volunteer"] },
-    { id: "seniors", label: role === "family_member" ? (t.seniors || "Family Elders") : t.seniors, icon: Users, roles: ["admin", "staff", "family_member", "caretaker", "caregiver"] },
+    { id: "seniors", label: role === "family_member" ? (t.seniors || "Family Elders") : t.seniors, icon: Users, roles: ["admin", "staff", "family_member", "caretaker", "caregiver", "volunteer"] },
     { id: "safety", label: t.safety, icon: ShieldCheck, roles: ["staff", "senior_citizen", "family_member", "caretaker", "caregiver", "volunteer"] },
     { id: "emergency", label: role === "admin" ? (t.emergency || "Emergency Incidents") : t.emergency, icon: AlertCircle, roles: ["admin", "staff", "senior_citizen", "family_member", "caretaker", "caregiver", "volunteer"], badge: activeEmergencyAlert ? "!" : null },
-    { id: "appointments", label: t.appointments, icon: Calendar, roles: ["admin", "staff", "senior_citizen", "family_member", "caretaker", "caregiver"] },
+    { id: "appointments", label: t.appointments, icon: Calendar, roles: ["admin", "staff", "senior_citizen", "family_member", "caretaker", "caregiver", "volunteer"] },
     { id: "assistance", label: t.assistance, icon: HandHeart, roles: ["admin", "staff", "senior_citizen", "family_member", "caretaker", "caregiver", "volunteer"] },
     { id: "fees", label: t.careReceipts || "Care Receipts", icon: CreditCard, roles: ["admin", "staff", "senior_citizen", "family_member"] },
     { id: "reviews", label: t.reviewsRatings || "Reviews & Care Team", icon: Award, roles: ["admin", "staff", "senior_citizen", "family_member", "caretaker", "caregiver", "volunteer"] },

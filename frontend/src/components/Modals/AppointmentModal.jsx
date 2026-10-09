@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Calendar, X, Clock, Hospital, User, CheckCircle2, 
-  Phone, Mail, MessageSquare, Send, Copy 
+  Phone, Mail, MessageSquare, Send, Copy, Users, HeartHandshake 
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -22,9 +22,34 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
   });
   const [loading, setLoading] = useState(false);
 
-  // Recipient Contact Details for Live Dispatch
-  const [recipientPhone, setRecipientPhone] = useState("+91 98765 00003");
-  const [recipientEmail, setRecipientEmail] = useState(user?.email || "family@seniorcare.local");
+  // Associated Contacts for the Selected Senior
+  const [contacts, setContacts] = useState({
+    familyMember: {
+      name: "Ashmitha / Priya (Family)",
+      phone: "+91 9080578504",
+      email: "family.test@seniorcare.local",
+      relation: "Daughter",
+      role: "family_member"
+    },
+    caretaker: {
+      name: "Anitha Krishnan (Caregiver)",
+      phone: "+91 6382598599",
+      email: "caretaker.test@seniorcare.local",
+      role: "caretaker"
+    },
+    volunteer: {
+      name: "Karthik Raman (Volunteer)",
+      phone: "+91 9443324444",
+      email: "volunteer.test@seniorcare.local",
+      role: "volunteer"
+    }
+  });
+
+  const [selectedRecipientKey, setSelectedRecipientKey] = useState("familyMember");
+
+  // Recipient Contact Details for Live Dispatch (prefilled & editable)
+  const [recipientPhone, setRecipientPhone] = useState("+91 9080578504");
+  const [recipientEmail, setRecipientEmail] = useState("family.test@seniorcare.local");
 
   // Notification Channels Selection
   const [channels, setChannels] = useState({
@@ -35,17 +60,37 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
 
   // Success view state with direct dispatch action buttons
   const [appointmentSuccessData, setAppointmentSuccessData] = useState(null);
+  const [activeSuccessContactKey, setActiveSuccessContactKey] = useState("familyMember");
+
+  const fetchContacts = async (snrId) => {
+    if (!snrId) return;
+    try {
+      const res = await api.get(`/seniors/${snrId}/contacts`);
+      if (res.data?.contacts) {
+        setContacts(res.data.contacts);
+        const contact = res.data.contacts[selectedRecipientKey] || res.data.contacts.familyMember;
+        if (contact) {
+          setRecipientPhone(contact.phone || "+91 9080578504");
+          setRecipientEmail(contact.email || "family.test@seniorcare.local");
+        }
+      }
+    } catch (e) {
+      // fallback to current
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
       setAppointmentSuccessData(null);
+      setSelectedRecipientKey("familyMember");
+      setActiveSuccessContactKey("familyMember");
       api.get("/seniors").then((res) => {
         const fetchedSeniors = res.data.seniors || [];
         setSeniors(fetchedSeniors);
         if (fetchedSeniors.length > 0) {
           const first = fetchedSeniors[0];
           setFormData((prev) => ({ ...prev, seniorId: prev.seniorId || first._id }));
-          setRecipientPhone(first.emergencyContactPhone || first.phone || "+91 98765 00003");
+          fetchContacts(prev.seniorId || first._id);
         }
       });
     }
@@ -53,9 +98,15 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
 
   const handleSeniorChange = (id) => {
     setFormData((prev) => ({ ...prev, seniorId: id }));
-    const snr = seniors.find((s) => s._id === id);
-    if (snr) {
-      setRecipientPhone(snr.emergencyContactPhone || snr.phone || "+91 98765 00003");
+    fetchContacts(id);
+  };
+
+  const handleSelectRecipient = (key) => {
+    setSelectedRecipientKey(key);
+    const target = contacts[key];
+    if (target) {
+      setRecipientPhone(target.phone || "");
+      setRecipientEmail(target.email || "");
     }
   };
 
@@ -103,10 +154,12 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
         hospital: formData.hospital,
         appointmentDate: formData.appointmentDate,
         timeSlot: formData.timeSlot,
+        contacts,
         phone: recipientPhone.trim(),
         email: recipientEmail.trim(),
         channels: activeChannels
       });
+      setActiveSuccessContactKey(selectedRecipientKey);
 
       showToast(
         lang === "ta"
@@ -123,48 +176,50 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
     }
   };
 
-  // Generate Direct Action Links
-  const getWhatsAppLink = (data) => {
-    const cleanPhone = (data.phone || "919876500003").replace(/[^0-9]/g, "");
+  // Generate Direct Action Links for any specific contact
+  const getWhatsAppLink = (data, contact) => {
+    let cleanPhone = (contact?.phone || data.phone || "919080578504").replace(/[^0-9]/g, "");
+    if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
     const msg = encodeURIComponent(
-      `🏥 *SeniorCare Appointment Confirmation*\n\n` +
-      `Booking ID: *${data.appointment?.appointmentCode || "APT"}*\n` +
+      `🏥 *SeniorCare Hospital Appointment Confirmation & Slip*\n\n` +
+      `Booking Token: *${data.appointment?.appointmentCode || "APT"}*\n` +
       `Resident: *${data.seniorName}*\n` +
       `Doctor: *${data.doctorName}* (${data.department})\n` +
       `Hospital / Clinic: *${data.hospital}*\n` +
       `Date & Slot: *${data.appointmentDate} at ${data.timeSlot}*\n` +
+      `Sent To: *${contact?.name || "Contact"} (${contact?.role || "Team"})*\n` +
       `Status: *Confirmed*\n\n` +
-      `_SeniorCare Geriatric Health Network_`
+      `Please arrive 10 minutes prior to the appointment slot.\n` +
+      `_SeniorCare Geriatric Health Network, Chennai_`
     );
     return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${msg}`;
   };
 
-  const getSmsLink = (data) => {
-    const cleanPhone = (data.phone || "+919876500003").replace(/[^0-9+]/g, "");
+  const getSmsLink = (data, contact) => {
+    const cleanPhone = (contact?.phone || data.phone || "+919080578504").replace(/[^0-9+]/g, "");
     const body = encodeURIComponent(
-      `SeniorCare Alert: Appointment ${data.appointment?.appointmentCode || "APT"} confirmed for ${data.seniorName} with ${data.doctorName} on ${data.appointmentDate} at ${data.timeSlot} at ${data.hospital}.`
+      `SeniorCare Alert: Appointment ${data.appointment?.appointmentCode || "APT"} confirmed for ${data.seniorName} with ${data.doctorName} on ${data.appointmentDate} at ${data.timeSlot} at ${data.hospital}. Contact: ${contact?.name}.`
     );
     return `sms:${cleanPhone}?body=${body}`;
   };
 
-  const getEmailLink = (data) => {
-    const subject = encodeURIComponent(`SeniorCare Appointment Confirmation: ${data.doctorName} - ${data.seniorName}`);
+  const getEmailLink = (data, contact) => {
+    const subject = encodeURIComponent(`SeniorCare Hospital Appointment Confirmation: ${data.doctorName} - ${data.seniorName}`);
     const body = encodeURIComponent(
-      `Hello,\n\nYour appointment has been confirmed.\n\nBooking ID: ${data.appointment?.appointmentCode || "APT"}\nResident: ${data.seniorName}\nDoctor: ${data.doctorName} (${data.department})\nFacility: ${data.hospital}\nSchedule: ${data.appointmentDate} at ${data.timeSlot}\n\nPlease arrive 10 minutes prior.\n\nBest regards,\nSeniorCare Medical Services`
+      `Hello ${contact?.name || ""},\n\nYour appointment has been confirmed.\n\nBooking ID: ${data.appointment?.appointmentCode || "APT"}\nResident: ${data.seniorName}\nDoctor: ${data.doctorName} (${data.department})\nFacility: ${data.hospital}\nSchedule: ${data.appointmentDate} at ${data.timeSlot}\n\nPlease arrive 10 minutes prior.\n\nBest regards,\nSeniorCare Medical Services`
     );
-    return `mailto:${data.email || "family@seniorcare.local"}?subject=${subject}&body=${body}`;
+    return `mailto:${contact?.email || data.email || "family@seniorcare.local"}?subject=${subject}&body=${body}`;
   };
 
-  const copyDetailsToClipboard = (data) => {
+  const copyDetailsToClipboard = (data, contact) => {
     const text = 
-      `SeniorCare Appointment Confirmation\n` +
+      `SeniorCare Hospital Appointment Confirmation\n` +
       `Booking ID: ${data.appointment?.appointmentCode || "APT"}\n` +
       `Resident: ${data.seniorName}\n` +
       `Doctor: ${data.doctorName} (${data.department})\n` +
       `Hospital / Clinic: ${data.hospital}\n` +
       `Date & Slot: ${data.appointmentDate} at ${data.timeSlot}\n` +
-      `Recipient Mobile: ${data.phone}\n` +
-      `Recipient Email: ${data.email}\n` +
+      `Recipient: ${contact?.name || "Contact"} (${contact?.phone})\n` +
       `Status: Confirmed`;
     navigator.clipboard.writeText(text).then(() => {
       showToast(lang === "ta" ? "விவரங்கள் நகலெடுக்கப்பட்டது! (Copied to clipboard)" : "Copied details to clipboard!", "success");
@@ -173,13 +228,17 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
     });
   };
 
+  const currentSuccessContact = appointmentSuccessData?.contacts 
+    ? (appointmentSuccessData.contacts[activeSuccessContactKey] || appointmentSuccessData.contacts.familyMember)
+    : contacts[selectedRecipientKey];
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
       <div 
         className="modal-dialog" 
         onClick={(e) => e.stopPropagation()} 
         style={{ 
-          maxWidth: 560,
+          maxWidth: 580,
           background: "var(--bg-surface, #ffffff)",
           color: "var(--text-main, #0f172a)",
           border: "1px solid var(--border-color, #e2e8f0)",
@@ -199,7 +258,7 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
         </div>
 
         {appointmentSuccessData ? (
-          /* SUCCESS & MULTI-CHANNEL DISPATCH ACTIONS CARD */
+          /* SUCCESS & MULTI-CHANNEL DISPATCH ACTIONS CARD WITH RECIPIENT TABS */
           <div style={{ padding: "0.5rem 0", display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{ textAlign: "center", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "14px", padding: "1.25rem" }}>
               <CheckCircle2 size={44} className="text-success" style={{ margin: "0 auto 0.5rem" }} />
@@ -209,132 +268,246 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
               <p style={{ margin: 0, fontSize: "0.85rem", color: "#047857" }}>
                 Token: <strong>{appointmentSuccessData.appointment?.appointmentCode || "APT"}</strong> · Resident: <strong>{appointmentSuccessData.seniorName}</strong>
               </p>
-              <div style={{ fontSize: "0.82rem", marginTop: "0.4rem", color: "var(--muted)" }}>
+              <div style={{ fontSize: "0.82rem", marginTop: "0.4rem", color: "var(--text-muted, #64748b)" }}>
                 👨‍⚕️ {appointmentSuccessData.doctorName} ({appointmentSuccessData.department}) · 📅 {appointmentSuccessData.appointmentDate} ({appointmentSuccessData.timeSlot})
               </div>
             </div>
 
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", padding: "1rem" }}>
-              <strong style={{ fontSize: "0.88rem", display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem", color: "var(--text-main)" }}>
-                <span>📲</span>
-                <span>{lang === "ta" ? "நேரடி அறிவிப்பு வழிகள் (Direct Action Links):" : "Direct Multi-Channel Dispatch:"}</span>
-              </strong>
+            {/* INSTANT 1-CLICK ACTION CARDS FOR FAMILY, CARETAKER, VOLUNTEER */}
+            <div style={{ textAlign: "left", marginBottom: "0.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label style={{ fontSize: "0.84rem", fontWeight: "800", color: "var(--text-main, #0f172a)", margin: 0 }}>
+                  ⚡ {lang === "ta" ? "உடனடி உறுதிசெய்தி சீட்டு அனுப்புக (1-Click Dispatch):" : "1-Click Send Confirmation Slip (WhatsApp / SMS):"}
+                </label>
+                <span style={{ fontSize: "0.72rem", color: "#16a34a", fontWeight: "700" }}>
+                  ● Instant Links Ready
+                </span>
+              </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                {/* WhatsApp Button */}
-                {appointmentSuccessData.channels.includes("whatsapp") && (
-                  <a 
-                    href={getWhatsAppLink(appointmentSuccessData)}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "space-between", 
-                      padding: "0.75rem 1rem", 
-                      borderRadius: "10px", 
-                      background: "#25D366", 
-                      color: "#fff", 
-                      fontWeight: "700", 
-                      fontSize: "0.9rem",
-                      textDecoration: "none",
-                      cursor: "pointer" 
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span>💬</span>
-                      <span>{lang === "ta" ? "WhatsApp மூலம் அனுப்புக / Open WhatsApp" : "Send Confirmation via WhatsApp"}</span>
-                    </span>
-                    <span style={{ fontSize: "0.78rem", background: "rgba(0,0,0,0.18)", padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
-                      {appointmentSuccessData.phone} ↗
-                    </span>
-                  </a>
-                )}
+                {/* 1. FAMILY MEMBER */}
+                <div style={{ background: "var(--bg-subtle, #f8fafc)", border: "1px solid var(--border-color, #e2e8f0)", borderRadius: "12px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <span style={{ fontSize: "1rem" }}>👨‍👩‍👧</span>
+                      <strong style={{ fontSize: "0.86rem", color: "var(--text-main, #0f172a)" }}>
+                        {appointmentSuccessData.contacts?.familyMember?.name || "Priya Ramesh (Daughter)"}
+                      </strong>
+                    </div>
+                    <small style={{ fontSize: "0.76rem", color: "var(--text-muted, #64748b)", display: "block" }}>
+                      Family Member · {appointmentSuccessData.contacts?.familyMember?.phone || appointmentSuccessData.phone}
+                    </small>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <a
+                      href={getWhatsAppLink(appointmentSuccessData, appointmentSuccessData.contacts?.familyMember)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "0.45rem 0.75rem",
+                        borderRadius: "8px",
+                        background: "#25D366",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "0.82rem",
+                        textDecoration: "none",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(37,211,102,0.3)"
+                      }}
+                      title="Send Slip to Family via WhatsApp"
+                    >
+                      <span>💬 WhatsApp</span>
+                    </a>
+                    <a
+                      href={getSmsLink(appointmentSuccessData, appointmentSuccessData.contacts?.familyMember)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "0.45rem 0.65rem",
+                        borderRadius: "8px",
+                        background: "#2563eb",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "0.82rem",
+                        textDecoration: "none",
+                        cursor: "pointer"
+                      }}
+                      title="Send SMS to Family"
+                    >
+                      <span>📱 SMS</span>
+                    </a>
+                  </div>
+                </div>
 
-                {/* SMS Button */}
-                {appointmentSuccessData.channels.includes("sms") && (
-                  <a 
-                    href={getSmsLink(appointmentSuccessData)}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "space-between", 
-                      padding: "0.75rem 1rem", 
-                      borderRadius: "10px", 
-                      background: "#2563eb", 
-                      color: "#fff", 
-                      fontWeight: "700", 
-                      fontSize: "0.9rem",
-                      textDecoration: "none",
-                      cursor: "pointer" 
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span>📱</span>
-                      <span>{lang === "ta" ? "SMS மூலம் அனுப்புக / Open SMS" : "Send SMS Alert"}</span>
-                    </span>
-                    <span style={{ fontSize: "0.78rem", background: "rgba(0,0,0,0.18)", padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
-                      {appointmentSuccessData.phone} ↗
-                    </span>
-                  </a>
-                )}
+                {/* 2. CARETAKER */}
+                <div style={{ background: "var(--bg-subtle, #f8fafc)", border: "1px solid var(--border-color, #e2e8f0)", borderRadius: "12px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <span style={{ fontSize: "1rem" }}>👩‍⚕️</span>
+                      <strong style={{ fontSize: "0.86rem", color: "var(--text-main, #0f172a)" }}>
+                        {appointmentSuccessData.contacts?.caretaker?.name || "Anitha Krishnan (Caregiver)"}
+                      </strong>
+                    </div>
+                    <small style={{ fontSize: "0.76rem", color: "var(--text-muted, #64748b)", display: "block" }}>
+                      Caretaker · {appointmentSuccessData.contacts?.caretaker?.phone || "+91 6382598599"}
+                    </small>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <a
+                      href={getWhatsAppLink(appointmentSuccessData, appointmentSuccessData.contacts?.caretaker)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "0.45rem 0.75rem",
+                        borderRadius: "8px",
+                        background: "#25D366",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "0.82rem",
+                        textDecoration: "none",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(37,211,102,0.3)"
+                      }}
+                      title="Send Slip to Caretaker via WhatsApp"
+                    >
+                      <span>💬 WhatsApp</span>
+                    </a>
+                    <a
+                      href={getSmsLink(appointmentSuccessData, appointmentSuccessData.contacts?.caretaker)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "0.45rem 0.65rem",
+                        borderRadius: "8px",
+                        background: "#2563eb",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "0.82rem",
+                        textDecoration: "none",
+                        cursor: "pointer"
+                      }}
+                      title="Send SMS to Caretaker"
+                    >
+                      <span>📱 SMS</span>
+                    </a>
+                  </div>
+                </div>
 
-                {/* Email Button */}
-                {appointmentSuccessData.channels.includes("email") && (
-                  <a 
-                    href={getEmailLink(appointmentSuccessData)}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "space-between", 
-                      padding: "0.75rem 1rem", 
-                      borderRadius: "10px", 
-                      background: "#ea580c", 
-                      color: "#fff", 
-                      fontWeight: "700", 
-                      fontSize: "0.9rem",
-                      textDecoration: "none",
-                      cursor: "pointer" 
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span>📧</span>
-                      <span>{lang === "ta" ? "Google Mail மூலம் அனுப்புக / Send Email" : "Send Email Confirmation"}</span>
-                    </span>
-                    <span style={{ fontSize: "0.78rem", background: "rgba(0,0,0,0.18)", padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
-                      {appointmentSuccessData.email} ↗
-                    </span>
-                  </a>
-                )}
-
-                {/* Copy to Clipboard fallback */}
-                <button
-                  type="button"
-                  onClick={() => copyDetailsToClipboard(appointmentSuccessData)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.5rem",
-                    padding: "0.65rem 1rem",
-                    borderRadius: "10px",
-                    background: "var(--surface-variant, rgba(0,0,0,0.04))",
-                    border: "1px solid var(--border-color, #cbd5e1)",
-                    color: "var(--text-main, #334155)",
-                    fontWeight: "600",
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    marginTop: "0.3rem"
-                  }}
-                >
-                  <Copy size={15} />
-                  <span>{lang === "ta" ? "📋 விவரங்களை நகலெடு (Copy Message & Details)" : "📋 Copy Confirmation Details to Clipboard"}</span>
-                </button>
+                {/* 3. VOLUNTEER */}
+                <div style={{ background: "var(--bg-subtle, #f8fafc)", border: "1px solid var(--border-color, #e2e8f0)", borderRadius: "12px", padding: "0.65rem 0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <span style={{ fontSize: "1rem" }}>🤝</span>
+                      <strong style={{ fontSize: "0.86rem", color: "var(--text-main, #0f172a)" }}>
+                        {appointmentSuccessData.contacts?.volunteer?.name || "Karthik Raman (Volunteer)"}
+                      </strong>
+                    </div>
+                    <small style={{ fontSize: "0.76rem", color: "var(--text-muted, #64748b)", display: "block" }}>
+                      Volunteer · {appointmentSuccessData.contacts?.volunteer?.phone || "+91 9443324444"}
+                    </small>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <a
+                      href={getWhatsAppLink(appointmentSuccessData, appointmentSuccessData.contacts?.volunteer)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "0.45rem 0.75rem",
+                        borderRadius: "8px",
+                        background: "#25D366",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "0.82rem",
+                        textDecoration: "none",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(37,211,102,0.3)"
+                      }}
+                      title="Send Slip to Volunteer via WhatsApp"
+                    >
+                      <span>💬 WhatsApp</span>
+                    </a>
+                    <a
+                      href={getSmsLink(appointmentSuccessData, appointmentSuccessData.contacts?.volunteer)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "0.45rem 0.65rem",
+                        borderRadius: "8px",
+                        background: "#2563eb",
+                        color: "#fff",
+                        fontWeight: "700",
+                        fontSize: "0.82rem",
+                        textDecoration: "none",
+                        cursor: "pointer"
+                      }}
+                      title="Send SMS to Volunteer"
+                    >
+                      <span>📱 SMS</span>
+                    </a>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Quick Actions Bar */}
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <button
+                type="button"
+                onClick={() => copyDetailsToClipboard(appointmentSuccessData, appointmentSuccessData.contacts?.familyMember)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.4rem",
+                  padding: "0.55rem 0.75rem",
+                  borderRadius: "8px",
+                  background: "var(--bg-subtle, #f8fafc)",
+                  border: "1px solid var(--border-color, #cbd5e1)",
+                  color: "var(--text-main, #334155)",
+                  fontWeight: "600",
+                  fontSize: "0.82rem",
+                  cursor: "pointer"
+                }}
+              >
+                <Copy size={14} />
+                <span>{lang === "ta" ? "📋 விவரங்களை நகலெடு" : "📋 Copy Details"}</span>
+              </button>
+
+              <a
+                href={getEmailLink(appointmentSuccessData, appointmentSuccessData.contacts?.familyMember)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.4rem",
+                  padding: "0.55rem 0.75rem",
+                  borderRadius: "8px",
+                  background: "rgba(234, 88, 12, 0.08)",
+                  border: "1px solid rgba(234, 88, 12, 0.25)",
+                  color: "#ea580c",
+                  fontWeight: "700",
+                  fontSize: "0.82rem",
+                  textDecoration: "none",
+                  cursor: "pointer"
+                }}
+              >
+                <Mail size={14} />
+                <span>{lang === "ta" ? "📧 Google Mail" : "📧 Send Email"}</span>
+              </a>
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
@@ -359,7 +532,7 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
               >
                 {seniors.map((s) => (
                   <option key={s._id} value={s._id}>
-                    {s.name} ({s.roomNumber || "Resident"})
+                    {s.name} (🏡 {s.address ? s.address.split(",").slice(-2).join(",").trim() : "Home Residence"})
                   </option>
                 ))}
               </select>
@@ -432,16 +605,79 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
               </div>
             </div>
 
-            {/* Recipient Phone and Email Inputs */}
+            {/* Recipient Selection Section (Family Member, Caretaker, Volunteer) */}
             <div style={{ background: "rgba(37,99,235,0.04)", border: "1px solid rgba(37,99,235,0.18)", padding: "0.85rem 1rem", borderRadius: "12px", margin: "0.85rem 0" }}>
-              <strong style={{ fontSize: "0.88rem", display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--primary)", marginBottom: "0.6rem" }}>
-                <Phone size={15} />
-                <span>{lang === "ta" ? "தொடர்பு எண்கள் & அறிவிப்பு முகவரி (WhatsApp / SMS / Email):" : "Recipient Contact for Live Updates (WhatsApp / SMS / Email):"}</span>
-              </strong>
+              <label style={{ fontSize: "0.84rem", fontWeight: "700", display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--primary, #2563eb)", marginBottom: "0.5rem" }}>
+                <Users size={16} />
+                <span>{lang === "ta" ? "உறுதிசெய்தி அனுப்ப வேண்டிய நபர் (Family / Caretaker / Volunteer):" : "Send Confirmation & Slip To (Select Recipient):"}</span>
+              </label>
 
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectRecipient("familyMember")}
+                  style={{
+                    padding: "0.55rem 0.6rem",
+                    borderRadius: "8px",
+                    border: selectedRecipientKey === "familyMember" ? "2px solid #2563eb" : "1px solid var(--border-color, #cbd5e1)",
+                    background: selectedRecipientKey === "familyMember" ? "rgba(37,99,235,0.1)" : "#fff",
+                    cursor: "pointer",
+                    textAlign: "left"
+                  }}
+                >
+                  <strong style={{ display: "block", fontSize: "0.82rem", color: selectedRecipientKey === "familyMember" ? "#1d4ed8" : "inherit" }}>
+                    👨‍👩‍👧 Family
+                  </strong>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {contacts.familyMember?.name || "Family"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectRecipient("caretaker")}
+                  style={{
+                    padding: "0.55rem 0.6rem",
+                    borderRadius: "8px",
+                    border: selectedRecipientKey === "caretaker" ? "2px solid #2563eb" : "1px solid var(--border-color, #cbd5e1)",
+                    background: selectedRecipientKey === "caretaker" ? "rgba(37,99,235,0.1)" : "#fff",
+                    cursor: "pointer",
+                    textAlign: "left"
+                  }}
+                >
+                  <strong style={{ display: "block", fontSize: "0.82rem", color: selectedRecipientKey === "caretaker" ? "#1d4ed8" : "inherit" }}>
+                    👩‍⚕️ Caretaker
+                  </strong>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {contacts.caretaker?.name || "Caretaker"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectRecipient("volunteer")}
+                  style={{
+                    padding: "0.55rem 0.6rem",
+                    borderRadius: "8px",
+                    border: selectedRecipientKey === "volunteer" ? "2px solid #2563eb" : "1px solid var(--border-color, #cbd5e1)",
+                    background: selectedRecipientKey === "volunteer" ? "rgba(37,99,235,0.1)" : "#fff",
+                    cursor: "pointer",
+                    textAlign: "left"
+                  }}
+                >
+                  <strong style={{ display: "block", fontSize: "0.82rem", color: selectedRecipientKey === "volunteer" ? "#1d4ed8" : "inherit" }}>
+                    🤝 Volunteer
+                  </strong>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {contacts.volunteer?.name || "Volunteer"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Phone & Email Inputs */}
               <div className="form-row-2">
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontSize: "0.8rem", fontWeight: "600" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "600" }}>
                     📱 {lang === "ta" ? "மொபைல் எண் (WhatsApp & SMS) *" : "Mobile Number (WhatsApp & SMS) *"}
                   </label>
                   <input 
@@ -450,12 +686,12 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
                     onChange={(e) => setRecipientPhone(e.target.value)}
                     placeholder="+91 98765 00003"
                     required
-                    style={{ fontSize: "0.88rem" }}
+                    style={{ fontSize: "0.86rem" }}
                   />
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontSize: "0.8rem", fontWeight: "600" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: "600" }}>
                     📧 {lang === "ta" ? "மின்னஞ்சல் முகவரி (Google Mail) *" : "Email Address (Google Mail) *"}
                   </label>
                   <input 
@@ -464,13 +700,13 @@ export default function AppointmentModal({ isOpen, onClose, onAppointmentCreated
                     onChange={(e) => setRecipientEmail(e.target.value)}
                     placeholder="family@seniorcare.local"
                     required
-                    style={{ fontSize: "0.88rem" }}
+                    style={{ fontSize: "0.86rem" }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Notification Channels Options - Prompted to User */}
+            {/* Notification Channels Options */}
             <div className="form-group" style={{ marginTop: "0.5rem" }}>
               <label style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <span>{lang === "ta" ? "தகவல் அனுப்பப்பட வேண்டிய வழிகள்:" : "Send Updates & Booking Slip via:"}</span>

@@ -21,7 +21,7 @@ export default function AssistanceModal({ isOpen, onClose, onAssistanceCreated }
   const [loading, setLoading] = useState(false);
 
   // Recipient Contact Details for Live Multi-Channel Dispatch
-  const [recipientPhone, setRecipientPhone] = useState("+91 98765 00003");
+  const [recipientPhone, setRecipientPhone] = useState("+91 9080578504");
   const [recipientEmail, setRecipientEmail] = useState(user?.email || "family@seniorcare.local");
 
   // Notification Channels Selection
@@ -43,7 +43,7 @@ export default function AssistanceModal({ isOpen, onClose, onAssistanceCreated }
         if (fetchedSeniors.length > 0) {
           const first = fetchedSeniors[0];
           setFormData((prev) => ({ ...prev, seniorId: prev.seniorId || first._id }));
-          setRecipientPhone(first.emergencyContactPhone || first.phone || "+91 98765 00003");
+          setRecipientPhone(first.emergencyContactPhone || first.phone || "+91 9080578504");
         }
       });
     }
@@ -53,7 +53,7 @@ export default function AssistanceModal({ isOpen, onClose, onAssistanceCreated }
     setFormData((prev) => ({ ...prev, seniorId: id }));
     const snr = seniors.find((s) => s._id === id);
     if (snr) {
-      setRecipientPhone(snr.emergencyContactPhone || snr.phone || "+91 98765 00003");
+      setRecipientPhone(snr.emergencyContactPhone || snr.phone || "+91 9080578504");
     }
   };
 
@@ -142,7 +142,7 @@ export default function AssistanceModal({ isOpen, onClose, onAssistanceCreated }
 
   // Generate Action Links
   const getWhatsAppLink = (data) => {
-    const cleanPhone = (data.phone || "919876500003").replace(/[^0-9]/g, "");
+    const cleanPhone = (data.phone || "919080578504").replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
       `🤝 *SeniorCare Assistance Alert*\n\n` +
       `Resident: *${data.seniorName}*\n` +
@@ -156,7 +156,7 @@ export default function AssistanceModal({ isOpen, onClose, onAssistanceCreated }
   };
 
   const getSmsLink = (data) => {
-    const cleanPhone = (data.phone || "+919876500003").replace(/[^0-9+]/g, "");
+    const cleanPhone = (data.phone || "+919080578504").replace(/[^0-9+]/g, "");
     const body = encodeURIComponent(
       `SeniorCare Assistance Alert: ${data.category} requested for ${data.seniorName}. Details: ${data.title}. Support team on standby.`
     );
@@ -371,7 +371,7 @@ export default function AssistanceModal({ isOpen, onClose, onAssistanceCreated }
               >
                 {seniors.map((s) => (
                   <option key={s._id} value={s._id}>
-                    {s.name} ({s.roomNumber || "Senior Resident"})
+                    {s.name} (🏡 {s.address ? s.address.split(",").slice(-2).join(",").trim() : "Home Residence"})
                   </option>
                 ))}
               </select>
