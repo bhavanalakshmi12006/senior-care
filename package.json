@@ -9,8 +9,8 @@
     "dev": "npm --prefix frontend run dev",
     "frontend": "npm --prefix frontend run dev",
     "seed": "npm --prefix backend run seed",
-    "build": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install",
-    "render-build": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install"
+    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build && npm --prefix backend install",
+    "render-build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build && npm --prefix backend install"
   },
   "keywords": [
     "senior-care",
